@@ -1,0 +1,25 @@
+import asyncio
+from event_system import EventSystem as es
+from components import GUI, Assembler, Trainer
+
+
+
+class App:
+
+    def __init__(self):
+        self.gui = GUI()
+        self.trainer = Trainer()
+        self.assembler = Assembler()
+
+    async def initialize(self):
+        await es.invoke('APP_START_EVENT', '')
+        await es.update()
+
+    def run(self):
+        asyncio.run(self.initialize())
+
+
+
+if __name__ == '__main__':
+    app = App()
+    app.run()
