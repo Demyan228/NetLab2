@@ -10,7 +10,7 @@ class EventSystem:
     query = asyncio.Queue()
 
     @staticmethod
-    async def update():
+    async def run():
         while True:
             event_type, event_data = await EventSystem.query.get()
             handlers = EventSystem.subscribers[event_type]

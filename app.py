@@ -13,7 +13,7 @@ class App:
 
     async def initialize(self):
         await es.invoke('APP_START_EVENT', '')
-        await es.update()
+        await es.run()
 
     def run(self):
         asyncio.run(self.initialize())
