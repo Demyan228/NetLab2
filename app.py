@@ -12,7 +12,7 @@ class App:
         self.assembler = Assembler()
 
     async def initialize(self):
-        await es.invoke('APP_START_EVENT', '')
+        await es.ainvoke('APP_START_EVENT', '')
         await es.run()
 
     def run(self):

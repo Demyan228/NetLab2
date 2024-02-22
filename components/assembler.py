@@ -14,5 +14,5 @@ class Assembler:
     @es.subscribe("ASSEMBLE_MODEL_EVENT")
     async def run(assemble_data):
         model = await Assembler.create_model(assemble_data["model_params"])
-        await es.invoke('TRAIN_START_EVENT', {"model": model})
+        await es.ainvoke('TRAIN_START_EVENT', {"model": model})
 

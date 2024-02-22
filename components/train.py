@@ -5,6 +5,7 @@ import config
 from event_system import EventSystem as es
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
+from typing import Optional
 
 
 
@@ -12,8 +13,8 @@ class Trainer:
     _last_render_time = time()
     _is_running = True
     max_delay = 1 / config.FPS
-    train_epochs = None
-    train_batches = None
+    train_epochs: Optional[int]
+    train_batches: Optional[int]
     model = None
     
     @staticmethod
@@ -41,7 +42,7 @@ class Trainer:
     async def train():
         for i in range(Trainer.train_epochs):
             await Trainer.train_epoch()
-            await es.invoke("EPOCH_DONE_EVENT", i)
+            await es.ainvoke("EPOCH_DONE_EVENT", i)
 
     @staticmethod
     async def train_epoch():
@@ -51,7 +52,7 @@ class Trainer:
                 train_batch = partial(Trainer.train_batch, Trainer.model)
                 t1 = loop.run_in_executor(pool, train_batch)
                 await t1
-            await es.invoke("BATCH_DONE_EVENT", i)
+            await es.ainvoke("BATCH_DONE_EVENT", i)
 
     @staticmethod
     def train_batch(model):

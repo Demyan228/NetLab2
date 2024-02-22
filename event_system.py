@@ -1,7 +1,5 @@
 import asyncio
 from collections import defaultdict
-from common import log
-
 
 
 class EventSystem:
@@ -18,8 +16,13 @@ class EventSystem:
             await asyncio.gather(*tasks)
 
     @staticmethod
-    async def invoke(event_type, event_data):
+    async def ainvoke(event_type, event_data):
         await EventSystem.query.put((event_type, event_data))
+
+    @staticmethod
+    def invoke(event_type, event_data):
+        EventSystem.query.put_nowait((event_type, event_data))
+
 
     @staticmethod
     def subscribe(event_type):

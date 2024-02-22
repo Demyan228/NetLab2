@@ -1,5 +1,5 @@
 ###    GUI    ###
-FPS = 2
+FPS = 60
 
 ###   TRAIN   ###
 ### ASSEMBLER ###
