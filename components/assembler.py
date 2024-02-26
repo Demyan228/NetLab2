@@ -22,3 +22,4 @@ class Assembler:
     @es.subscribe("APP_QUIT_EVENT")
     async def quit_handler(event_data):
         Assembler._is_running = False
+        log('ASSEMBLER QUIT')

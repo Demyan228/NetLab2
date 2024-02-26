@@ -3,7 +3,6 @@ from event_system import EventSystem as es
 from components import GUI, Assembler, Trainer
 
 
-
 class App:
 
     def __init__(self):
@@ -17,7 +16,6 @@ class App:
 
     def run(self):
         asyncio.run(self.initialize())
-
 
 
 if __name__ == '__main__':

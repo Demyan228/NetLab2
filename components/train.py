@@ -35,7 +35,9 @@ class Trainer:
     @es.subscribe('TRAIN_START_EVENT')
     async def run(model_data):
         Trainer.model = model_data["model"]
-        asyncio.get_running_loop().create_task(Trainer.train())
+        await asyncio.get_running_loop().create_task(Trainer.train())
+        await es.ainvoke('APP_QUIT_EVENT', '')
+        log('QUIT APP')
 
 
     @staticmethod
@@ -68,9 +70,9 @@ class Trainer:
 
     @staticmethod
     @es.subscribe('APP_QUIT_EVENT')
-    def quit_handler(event_data):
-        log(event_data)
+    async def quit_handler(event_data):
         Trainer._is_running = False
+        log('TRAIN QUIT')
 
     @staticmethod
     async def _update(train_data):
