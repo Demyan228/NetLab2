@@ -14,6 +14,8 @@ class EventSystem:
             handlers = EventSystem.subscribers[event_type]
             tasks = [handler(event_data) for handler in handlers]
             await asyncio.gather(*tasks)
+            if event_type == "APP_QUIT_EVENT":
+                break
 
     @staticmethod
     async def ainvoke(event_type, event_data):

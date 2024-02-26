@@ -26,6 +26,7 @@ class GUI:
             i += 1
             if i == 10:
                 await es.ainvoke('TRAIN_START_EVENT', {"epochs": 10, "batches": 5})
+        await es.invoke("APP_QUIT_EVENT", {})
 
     @staticmethod
     @es.subscribe('APP_START_EVENT')
@@ -41,7 +42,6 @@ class GUI:
     @staticmethod
     @es.subscribe('APP_QUIT_EVENT')
     async def quit_handler(event_data):
-        log(event_data)
         GUI._is_running = False
         await asyncio.sleep(0)
 

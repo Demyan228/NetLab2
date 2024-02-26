@@ -2,6 +2,7 @@ from event_system import EventSystem as es
 from common import log
 import asyncio
 class Assembler:
+    _is_running = True
     @staticmethod
     async def create_model(model_params) -> str:
         log("асемблинг начат")
@@ -14,5 +15,10 @@ class Assembler:
     @es.subscribe("ASSEMBLE_MODEL_EVENT")
     async def run(assemble_data):
         model = await Assembler.create_model(assemble_data["model_params"])
-        await es.ainvoke('TRAIN_START_EVENT', {"model": model})
+        if Assembler._is_running:
+            await es.ainvoke('TRAIN_START_EVENT', {"model": model})
 
+    @staticmethod
+    @es.subscribe("APP_QUIT_EVENT")
+    async def quit_handler(event_data):
+        Assembler._is_running = False

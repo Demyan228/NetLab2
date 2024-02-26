@@ -41,12 +41,16 @@ class Trainer:
     @staticmethod
     async def train():
         for i in range(Trainer.train_epochs):
+            if not Trainer._is_running:
+                break
             await Trainer.train_epoch()
             await es.ainvoke("EPOCH_DONE_EVENT", i)
 
     @staticmethod
     async def train_epoch():
         for i in range(Trainer.train_batches):
+            if not Trainer._is_running:
+                break
             with ProcessPoolExecutor() as pool:
                 loop = asyncio.get_running_loop()
                 train_batch = partial(Trainer.train_batch, Trainer.model)
