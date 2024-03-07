@@ -3,7 +3,6 @@ from event_system import EventSystem as es
 from components import Assembler, Trainer, GUI
 from common import log
 
-
 class App:
 
     def __init__(self):

@@ -5,6 +5,8 @@ import config
 from event_system import EventSystem as es
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
+from typing import Optional
+import torch
 
 
 class NotInitializedError(Exception): ...
@@ -27,17 +29,27 @@ class Trainer:
         Trainer.learning_rate = hyperparams.get("lr", config.default_lr)
         Trainer._is_initialized = True
 
+
+    @staticmethod
+    def load_model(model_file_path):
+        model = torch.load(model_file_path)
+        log(model)
+        return model
+
+
     @staticmethod
     @es.subscribe('TRAIN_START_EVENT')
     async def run(model_data):
         if not Trainer._is_initialized:
             raise NotInitializedError("call set_hyperparams before run")
-        Trainer.model = model_data["model"]
+        Trainer.model = Trainer.load_model(model_data["model_file_path"])
         asyncio.get_running_loop().create_task(Trainer.train())
 
     @staticmethod
     async def train():
         for i in range(Trainer.train_epochs):
+            if not Trainer._is_running:
+                break
             await Trainer.train_epoch()
             await es.ainvoke("EPOCH_DONE_EVENT", i)
         await es.ainvoke("TRAINER_QUIT_EVENT", {})
@@ -45,6 +57,8 @@ class Trainer:
     @staticmethod
     async def train_epoch():
         for i in range(Trainer.train_batches):
+            if not Trainer._is_running:
+                break
             with ProcessPoolExecutor() as pool:
                 loop = asyncio.get_running_loop()
                 train_batch = partial(Trainer.train_batch, Trainer.model)
