@@ -7,7 +7,6 @@ debug = True
 ###    GUI    ###
 monitor = get_monitors()[0]
 DW, DH = monitor.width, monitor.height
-print(DW, DH)
 indent = DW // 60
 
 FPS = 60

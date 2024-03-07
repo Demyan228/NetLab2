@@ -1,7 +1,7 @@
 import asyncio
 from event_system import EventSystem as es
 from components import Assembler, Trainer, GUI
-from common import log
+
 
 class App:
 
