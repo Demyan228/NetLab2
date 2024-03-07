@@ -5,17 +5,19 @@ import config
 from event_system import EventSystem as es
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
-from typing import Optional
 
+
+class NotInitializedError(Exception): ...
 
 class Trainer:
     _last_render_time = time()
     _is_running = True
     max_delay = 1 / config.FPS
-    train_epochs: Optional[int]
-    train_batches: Optional[int]
-    learning_rate: Optional[int]
+    train_epochs: int = 0
+    train_batches: int = 0
+    learning_rate: int = 0
     model = None
+    _is_initialized = False
 
     @staticmethod
     @es.subscribe('SET_HYPERPARAMS')
@@ -23,10 +25,13 @@ class Trainer:
         Trainer.train_epochs = hyperparams.get("train_epochs", config.default_train_epochs)
         Trainer.train_batches = hyperparams.get("train_batches", config.default_train_batches)
         Trainer.learning_rate = hyperparams.get("lr", config.default_lr)
+        Trainer._is_initialized = True
 
     @staticmethod
     @es.subscribe('TRAIN_START_EVENT')
     async def run(model_data):
+        if not Trainer._is_initialized:
+            raise NotInitializedError("call set_hyperparams before run")
         Trainer.model = model_data["model"]
         asyncio.get_running_loop().create_task(Trainer.train())
 
