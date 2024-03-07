@@ -1,6 +1,6 @@
 from win32api import GetSystemMetrics
 ###     LOG      ###
-debug = False
+debug = True
 
 ###    GUI    ###
 DW, DH = GetSystemMetrics(0), GetSystemMetrics(1) - 50

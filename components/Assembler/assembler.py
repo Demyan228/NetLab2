@@ -1,22 +1,23 @@
 from event_system import EventSystem as es
+from components.Assembler.PyTorchBackend import PyTorchBackend
 from common import log
 import asyncio
 class Assembler:
     _is_running = True
+    _backend = PyTorchBackend
+
     @staticmethod
-    async def create_model(layers) -> str:
-        log("асемблинг начат")
-        await asyncio.sleep(2)
-        log("асеблинг заверешен")
-        return f"Norm model with params" + '\n'.join([str(i) for i in layers])
+    async def create_model(layers):
+        model_file_path = await Assembler._backend.create_model(layers)
+        return model_file_path
 
 
     @staticmethod
     @es.subscribe("ASSEMBLE_MODEL_EVENT")
     async def run(assemble_data):
-        model = await Assembler.create_model(assemble_data["layers"])
+        model_file_path = await Assembler.create_model(assemble_data["layers"])
         if Assembler._is_running:
-            await es.ainvoke('TRAIN_START_EVENT', {"model": model})
+            await es.ainvoke('TRAIN_START_EVENT', {"model_file_path": model_file_path})
 
     @staticmethod
     @es.subscribe("APP_QUIT_EVENT")
