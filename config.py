@@ -1,9 +1,12 @@
-from win32api import GetSystemMetrics
+from screeninfo import get_monitors
+
+
 ###     LOG      ###
 debug = True
 
 ###    GUI    ###
-DW, DH = GetSystemMetrics(0), GetSystemMetrics(1) - 50
+monitor = get_monitors()[0]
+DW, DH = monitor.width, monitor.height
 indent = DW // 60
 
 FPS = 60

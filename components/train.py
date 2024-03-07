@@ -42,7 +42,6 @@ class Trainer:
     async def run(model_data):
         if not Trainer._is_initialized:
             raise NotInitializedError("call set_hyperparams before run")
-        Trainer.model = model_data["model"]
         Trainer.model = Trainer.load_model(model_data["model_file_path"])
         asyncio.get_running_loop().create_task(Trainer.train())
 
