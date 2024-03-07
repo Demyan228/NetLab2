@@ -4,7 +4,6 @@ from common import log
 
 
 class EventSystem:
-
     subscribers = defaultdict(list)
     query = asyncio.Queue()
 
@@ -26,12 +25,14 @@ class EventSystem:
     def invoke(event_type, event_data):
         EventSystem.query.put_nowait((event_type, event_data))
 
-
     @staticmethod
     def subscribe(event_type):
         def wrapper(handler):
             EventSystem.subscribers[event_type].append(handler)
+
             async def inner(*args, **kwargs):
                 return await handler(*args, **kwargs)
+
             return inner
+
         return wrapper

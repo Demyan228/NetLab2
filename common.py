@@ -1,2 +1,4 @@
+from config import debug
 def log(*args, **kwargs):
-    print(*args, **kwargs, flush=True)
+    if debug:
+        print(*args, **kwargs, flush=True)

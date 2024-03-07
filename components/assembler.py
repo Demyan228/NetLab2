@@ -4,17 +4,17 @@ import asyncio
 class Assembler:
     _is_running = True
     @staticmethod
-    async def create_model(model_params) -> str:
+    async def create_model(layers) -> str:
         log("асемблинг начат")
         await asyncio.sleep(2)
         log("асеблинг заверешен")
-        return f"Norm model with params {model_params[0]} {model_params[1]} {model_params[2]}"
+        return f"Norm model with params" + '\n'.join([str(i) for i in layers])
 
 
     @staticmethod
     @es.subscribe("ASSEMBLE_MODEL_EVENT")
     async def run(assemble_data):
-        model = await Assembler.create_model(assemble_data["model_params"])
+        model = await Assembler.create_model(assemble_data["layers"])
         if Assembler._is_running:
             await es.ainvoke('TRAIN_START_EVENT', {"model": model})
 
