@@ -6,6 +6,11 @@ from concurrent.futures import ProcessPoolExecutor
 import asyncio
 from functools import partial
 
+def RMSE(target, prediction):
+    return torch.sqrt(torch.nn.MSELoss()(target, prediction))
+
+
+
 class PyTorchBackend:
     @staticmethod
     async def create_model(layers):
@@ -34,11 +39,32 @@ class PyTorchBackend:
             log(t1.result())
             return t1.result()
 
+
     @staticmethod
-    def train_batch(model):
-        log(f"моделька ({model}) начала считать батч")
-        info = sum(i for i in range(100_000_000))
-        log("наконец закончила, очень устала")
+    def get_optimizer(optimizer_name: str):
+        optimizers = {"Adam": torch.optim.Adam,
+                      "SGD" : torch.optim.SGD
+                      }
+        return optimizers[optimizer_name]
+
+    @staticmethod
+    def get_criterian(criterian_name):
+        criterians = {"RMSE": RMSE,
+                      "MSE": torch.nn.MSELoss(),
+                      "BCE": torch.nn.BCELoss(),
+                      "CCE": RMSE,
+                      }
+        return criterians[criterian_name]
+
+    @staticmethod
+    def train_batch(model, batch: list[torch.tensor], loss_fn, optimizer: torch.optim.Optimizer):
+        optimizer.zero_grad()
+        X, labels = batch
+        X, labels = X.float(), labels.float().unsqueeze(1)
+        loss: torch.tensor = loss_fn(model(X), labels)
+        loss.backward()
+        optimizer.step()
+        return loss.item()
 
     @staticmethod
     def linear(input, output):

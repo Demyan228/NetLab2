@@ -5,7 +5,7 @@ import config
 from event_system import EventSystem as es
 from dearpygui import dearpygui as dpg
 from components.Gui.core import links_graph
-
+from components.Gui import core
 
 class GUI:
     _is_running = True
@@ -60,7 +60,11 @@ class GUI:
     def assemble_callback():
         lr = dpg.get_value("HyperparamsLearningRate")
         layers = GUI.get_model_layers()
-        es.invoke("SET_HYPERPARAMS", {"lr": lr})
+        target_column = dpg.get_value("TargetColumn")
+        criterian = dpg.get_value("HyperparamsCriterian")
+        optimizer = dpg.get_value("HyperparamsOptimizer")
+        es.invoke("SET_HYPERPARAMS", {"lr": lr, "optimizer": optimizer, "criterian": criterian})
+        es.invoke("SET_DATASET_PARAMS", {"path": core.current_dataset_path, "target_column": target_column})
         es.invoke("ASSEMBLE_MODEL_EVENT", {"layers": layers})
 
     @staticmethod
@@ -73,7 +77,7 @@ class GUI:
     @staticmethod
     @es.subscribe('BATCH_DONE_EVENT')
     async def print_batch_info(info):
-        log(f'[{info["index"]} BATCH TRAINED]')
+        log(f'[{info["loss"]} BATCH Loss]')
 
     @staticmethod
     @es.subscribe('APP_QUIT_EVENT')

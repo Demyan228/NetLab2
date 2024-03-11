@@ -1,6 +1,9 @@
 import dearpygui.dearpygui as d
-from config import DW, DH, indent
+
+import config
+from config import DW, DH, indent, default_dataset_path
 import components.Gui.callbacks as cb
+
 
 d.create_context()
 
@@ -11,7 +14,7 @@ with d.font_registry():
 with d.file_dialog(
         tag='FILEDIALOG', directory_selector=False, show=False,
         # callback=load_file_callback, width=1920, height=1080, default_path='/home/user/datasets/',
-        callback=cb.load_file_callback, width=DW / 2, height=DH / 2, default_path='C:\\Users\\bubno\\Downloads',
+        callback=cb.load_file_callback, width=DW / 2, height=DH / 2, default_path=default_dataset_path,
 ):
     d.add_file_extension('.*')
     d.add_file_extension('', color=(200, 200, 255, 255))
@@ -36,7 +39,7 @@ with d.window(tag='WindowHyperparams', width=DW - indent * 3 - DW // 1.8, height
     d.add_slider_int(tag='HyperparamsNumEpochs', label=' Num Epochs', width=DW // 10, indent=indent, min_value=1,
                      default_value=10, max_value=100)
     d.add_combo(tag='HyperparamsOptimizer', label=' Optimizer', width=DW // 10, indent=indent, items=['Adam', 'SDG'],
-                default_value='Adam', callback=cb.debug_callback)
+                default_value=config.default_optimizer, callback=cb.debug_callback)
     d.add_combo(tag='HyperparamsCriterian', label=' Loss', width=DW // 10, indent=indent,
                 items=['MSE', 'RMSE', 'BCE', 'CCE'], default_value='MSE')
     d.add_spacer(height=indent // 2.5)
@@ -46,6 +49,8 @@ with d.window(tag='WindowHyperparams', width=DW - indent * 3 - DW // 1.8, height
         d.add_button(tag='DatasetButton', label='DataSet', callback=cb.choice_dataset_callback, width=DW // 20,
                      indent=indent)
         d.add_button(tag='train', label='Train', width=DW // 20, indent=indent * 2 + DW // 20)
+        d.add_combo(tag='TargetColumn', label="target_column", width=DW // 15, indent=indent + DW // 5,
+                    items=["Choose dataset"], default_value='Column')
 
 with d.window(tag='TableWindow', width=DW - indent * 3 - DW // 1.8, height=DH * 2 // 3 - indent * 4,
               pos=(DW // 1.8 + indent * 2, DH // 3 + indent * 2), no_title_bar=True, no_resize=True, no_move=True):

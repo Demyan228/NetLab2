@@ -2,10 +2,12 @@ from dearpygui import dearpygui as d
 from common import log
 from components.Gui.nodes import NODES
 from components.Gui.core import links_graph, links_elements
+from components.Gui import core
 import pandas as pd
 
 def create_csv_table(csv_file):
     df = pd.read_csv(csv_file, encoding="utf8")
+    d.configure_item("TargetColumn", items=df.columns.tolist())
     if d.does_alias_exist('Table'):
         d.delete_item('Table')
     with d.tab_bar(tag='Table', parent='TableWindow'):
@@ -61,7 +63,9 @@ def choice_dataset_callback(sender, app_data):
 
 def load_file_callback(sender, app_data):
     file_path = list(app_data['selections'].values())[0]
+    core.change_dataset_path(file_path)
     create_csv_table(file_path)
+
 
 def debug_callback(sender, app_data, user_data):
     text = f"""
