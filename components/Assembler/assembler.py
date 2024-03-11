@@ -1,7 +1,8 @@
 from event_system import EventSystem as es
-from components.Assembler.PyTorchBackend import PyTorchBackend
+from components.backend.PyTorchBackend import PyTorchBackend
 from common import log
-import asyncio
+
+
 class Assembler:
     _is_running = True
     _backend = PyTorchBackend

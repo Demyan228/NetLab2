@@ -1,6 +1,10 @@
 import torch
 from torch import nn
 import os
+from common import log
+from concurrent.futures import ProcessPoolExecutor
+import asyncio
+from functools import partial
 
 class PyTorchBackend:
     @staticmethod
@@ -20,6 +24,21 @@ class PyTorchBackend:
         torch.save(model, model_path)
         return model_path
 
+    @staticmethod
+    async def load_model(model_file_path):
+        with ProcessPoolExecutor() as pool:
+            loop = asyncio.get_running_loop()
+            load_model = partial(torch.load, model_file_path)
+            t1 = loop.run_in_executor(pool, load_model)
+            await t1
+            log(t1.result())
+            return t1.result()
+
+    @staticmethod
+    def train_batch(model):
+        log(f"моделька ({model}) начала считать батч")
+        info = sum(i for i in range(100_000_000))
+        log("наконец закончила, очень устала")
 
     @staticmethod
     def linear(input, output):

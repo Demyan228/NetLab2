@@ -5,8 +5,7 @@ import config
 from event_system import EventSystem as es
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
-from typing import Optional
-import torch
+from components.backend.PyTorchBackend import PyTorchBackend
 
 
 class NotInitializedError(Exception): ...
@@ -31,18 +30,11 @@ class Trainer:
 
 
     @staticmethod
-    def load_model(model_file_path):
-        model = torch.load(model_file_path)
-        log(model)
-        return model
-
-
-    @staticmethod
     @es.subscribe('TRAIN_START_EVENT')
     async def run(model_data):
         if not Trainer._is_initialized:
-            raise NotInitializedError("call set_hyperparams before run")
-        Trainer.model = Trainer.load_model(model_data["model_file_path"])
+            raise NotInitializedError("  all set_hyperparams before run")
+        Trainer.model = await PyTorchBackend.load_model(model_data["model_file_path"])
         asyncio.get_running_loop().create_task(Trainer.train())
 
     @staticmethod
@@ -61,16 +53,11 @@ class Trainer:
                 break
             with ProcessPoolExecutor() as pool:
                 loop = asyncio.get_running_loop()
-                train_batch = partial(Trainer.train_batch, Trainer.model)
+                train_batch = partial(PyTorchBackend.train_batch, Trainer.model)
                 t1 = loop.run_in_executor(pool, train_batch)
                 await t1
             await es.ainvoke("BATCH_DONE_EVENT", {"index": i})
 
-    @staticmethod
-    def train_batch(model):
-        log(f"моделька ({model}) начала считать батч")
-        info = sum(i for i in range(100_000_000))
-        log("наконец закончила, очень устала")
 
     @staticmethod
     @es.subscribe('APP_QUIT_EVENT')
