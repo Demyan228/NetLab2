@@ -33,7 +33,7 @@ with d.window(tag='WindowHyperparams', width=DW - indent * 3 - DW // 1.8, height
     d.add_text('Hyperparams', tag='HyperparamsTextLabel', pos=(DW // 6, indent // 2))
     d.add_spacer(height=indent * 2)
     d.add_input_float(tag='HyperparamsLearningRate', label=' LearningRate', width=DW // 10, indent=indent,
-                      min_value=0.000001, default_value=0.001, step=0)
+                      min_value=0.000001, default_value=0.01, step=0)
     d.add_input_int(tag='HyperparamsBatchSize', label=' BatchSize', width=DW // 10, indent=indent, min_value=1,
                     default_value=64, step=16, step_fast=2)
     d.add_slider_int(tag='HyperparamsNumEpochs', label=' Num Epochs', width=DW // 10, indent=indent, min_value=1,
@@ -41,7 +41,7 @@ with d.window(tag='WindowHyperparams', width=DW - indent * 3 - DW // 1.8, height
     d.add_combo(tag='HyperparamsOptimizer', label=' Optimizer', width=DW // 10, indent=indent, items=['Adam', 'SDG'],
                 default_value=config.default_optimizer, callback=cb.debug_callback)
     d.add_combo(tag='HyperparamsCriterian', label=' Loss', width=DW // 10, indent=indent,
-                items=['MSE', 'RMSE', 'BCE', 'CCE'], default_value='MSE')
+                items=['MSE', "MAE", 'RMSE', 'BCE', 'CCE'], default_value='MAE')
     d.add_spacer(height=indent // 2.5)
     d.add_separator()
     d.add_spacer(height=indent // 2.5)
@@ -50,7 +50,7 @@ with d.window(tag='WindowHyperparams', width=DW - indent * 3 - DW // 1.8, height
                      indent=indent)
         d.add_button(tag='train', label='Train', width=DW // 20, indent=indent * 2 + DW // 20)
         d.add_combo(tag='TargetColumn', label="target_column", width=DW // 15, indent=indent + DW // 5,
-                    items=["Choose dataset"], default_value='Column')
+                    items=["Choose dataset"], default_value='charges')
 
 with d.window(tag='TableWindow', width=DW - indent * 3 - DW // 1.8, height=DH * 2 // 3 - indent * 4,
               pos=(DW // 1.8 + indent * 2, DH // 3 + indent * 2), no_title_bar=True, no_resize=True, no_move=True):

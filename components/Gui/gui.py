@@ -5,7 +5,9 @@ import config
 from event_system import EventSystem as es
 from dearpygui import dearpygui as dpg
 from components.Gui.core import links_graph
+import os
 from components.Gui import core
+from components.Gui.callbacks import create_csv_table
 
 class GUI:
     _is_running = True
@@ -19,6 +21,8 @@ class GUI:
         from components.Gui import verstka
         verstka.init()
         dpg.set_item_callback("train", GUI.assemble_callback)
+        core.change_dataset_path(os.path.join(config.default_dataset_path, "netlab_test.csv"))
+        create_csv_table(os.path.join(config.default_dataset_path, "netlab_test.csv"))
 
     @staticmethod
     async def _delay():
@@ -75,9 +79,9 @@ class GUI:
         loop.create_task(GUI.update())
 
     @staticmethod
-    @es.subscribe('BATCH_DONE_EVENT')
-    async def print_batch_info(info):
-        log(f'[{info["loss"]} BATCH Loss]')
+    @es.subscribe('EPOCH_DONE_EVENT')
+    async def print_epoch_info(info):
+        log(f'[{info["loss"]} EPOCH Loss]')
 
     @staticmethod
     @es.subscribe('APP_QUIT_EVENT')

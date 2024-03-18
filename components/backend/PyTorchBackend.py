@@ -53,15 +53,17 @@ class PyTorchBackend:
                       "MSE": torch.nn.MSELoss(),
                       "BCE": torch.nn.BCELoss(),
                       "CCE": RMSE,
+                      "MAE": torch.nn.L1Loss(),
                       }
         return criterians[criterian_name]
 
     @staticmethod
     def train_batch(model, batch: list[torch.tensor], loss_fn, optimizer: torch.optim.Optimizer):
-        optimizer.zero_grad()
         X, labels = batch
         X, labels = X.float(), labels.float().unsqueeze(1)
-        loss: torch.tensor = loss_fn(model(X), labels)
+        out = model(X)
+        loss = loss_fn(out, labels)
+        optimizer.zero_grad()
         loss.backward()
         optimizer.step()
         return loss.item()
