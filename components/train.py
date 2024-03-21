@@ -48,31 +48,34 @@ class Trainer:
         Trainer.optimizer = Trainer.optimizer_type(Trainer.model.parameters(), Trainer.learning_rate)
         asyncio.get_running_loop().create_task(Trainer.train())
 
-
     @staticmethod
     async def train():
+        t = time()
         for i in range(Trainer.train_epochs):
             if not Trainer._is_running:
                 break
-            await Trainer.train_epoch()
+            loop = asyncio.get_running_loop()
+            train_epoch = partial(Trainer.train_epoch, Trainer.model, Trainer.loss_fn, Trainer.optimizer, Trainer.data_loader)
+            t1 = loop.run_in_executor(ppe, train_epoch)
+            await t1
+            await es.ainvoke("EPOCH_DONE_EVENT", {"loss": t1.result()})
+        log(time() - t)
         await es.ainvoke("TRAINER_QUIT_EVENT", {})
 
     @staticmethod
-    async def train_epoch():
+    def train_epoch(model, loss_fn, optimizer, data_loader):
         sum_loss = 0
         count = 0
-        for batch in Trainer.data_loader:
+        sum_data_means = 0
+        for batch in data_loader:
             if not Trainer._is_running:
                 break
-            loop = asyncio.get_running_loop()
-            train_batch = partial(PyTorchBackend.train_batch, Trainer.model, batch, Trainer.loss_fn, Trainer.optimizer)
-            t1 = loop.run_in_executor(ppe, train_batch)
-            await t1
-            batch_loss = t1.result()
+            batch_loss = PyTorchBackend.train_batch(model, batch, loss_fn, optimizer)
+            _, y = batch
+            sum_data_means += sum(y) / len(y)
             sum_loss += batch_loss
-            await es.ainvoke("BATCH_DONE_EVENT", {"batch_loss": batch_loss})
             count += 1
-        await es.ainvoke("EPOCH_DONE_EVENT", {"loss": sum_loss / count})
+        return (1 - sum_loss / sum_data_means) * 100
 
     @staticmethod
     @es.subscribe('SET_DATASET_PARAMS')

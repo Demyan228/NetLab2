@@ -16,7 +16,7 @@ default_dataset_path = 'C:\\Users\\bubno\\Downloads'
 TEST_DATASET = 'netlab_test.csv'
 
 ###   TRAIN   ###
-default_train_epochs = 50
+default_train_epochs = 100
 default_lr = 0.01
 default_optimizer = "Adam"
 default_criterian = "MAE"
