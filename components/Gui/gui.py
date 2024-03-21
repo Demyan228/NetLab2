@@ -21,8 +21,8 @@ class GUI:
         from components.Gui import verstka
         verstka.init()
         dpg.set_item_callback("train", GUI.assemble_callback)
-        core.change_dataset_path(os.path.join(config.default_dataset_path, "netlab_test.csv"))
-        create_csv_table(os.path.join(config.default_dataset_path, "netlab_test.csv"))
+        core.change_dataset_path(os.path.join(config.default_dataset_path, config.TEST_DATASET))
+        create_csv_table(os.path.join(config.default_dataset_path, config.TEST_DATASET))
 
     @staticmethod
     async def _delay():
