@@ -1,19 +1,27 @@
 import asyncio
+from dataclasses import dataclass, field
 from time import time
 from common import log
 import config
-from event_system import EventSystem as es
+from event_system import EventSystem as es, EventTypes
 from concurrent.futures import ProcessPoolExecutor , ThreadPoolExecutor
 from functools import partial
 from components.backend.PyTorchBackend import PyTorchBackend
 from components.DataSet.CSV_Dataset import CSV_Dataset
 from torch.utils.data import DataLoader
-import torch
-
-ppe = ProcessPoolExecutor()
 
 
 class NotInitializedError(Exception): ...
+ppe = ProcessPoolExecutor()
+
+
+@dataclass
+class History:
+    train_loss: list[float] = field(default_factory=list)
+    test_loss: list[float] = field(default_factory=list)
+    train_acc: float = 0
+    test_acc: float = 0
+
 
 class Trainer:
     _last_render_time = time()
@@ -27,18 +35,19 @@ class Trainer:
     model = None
     _is_hyperparams_initialized = False
     _is_dataset_initialized = False
+    _history = History()
 
     @staticmethod
-    @es.subscribe('SET_HYPERPARAMS')
+    @es.subscribe(EventTypes.SET_HYPERPARAMS)
     async def set_hyperparams(hyperparams):
-        Trainer.train_epochs = hyperparams.get("train_epochs", config.default_train_epochs)
+        Trainer.train_epochs = hyperparams.get("num_epochs", config.default_train_epochs)
         Trainer.learning_rate = hyperparams.get("lr", config.default_lr)
         Trainer.optimizer_type = PyTorchBackend.get_optimizer(hyperparams.get("optimizer", config.default_optimizer))
         Trainer.loss_fn = PyTorchBackend.get_criterian(hyperparams.get("criterian", config.default_criterian))
         Trainer._is_hyperparams_initialized = True
 
     @staticmethod
-    @es.subscribe('TRAIN_START_EVENT')
+    @es.subscribe(EventTypes.TRAIN_START)
     async def run(model_data):
         if not Trainer._is_hyperparams_initialized:
             raise NotInitializedError("  all set_hyperparams before run")
@@ -51,11 +60,11 @@ class Trainer:
 
     @staticmethod
     async def train():
-        for i in range(Trainer.train_epochs):
+        for _ in range(Trainer.train_epochs):
             if not Trainer._is_running:
                 break
             await Trainer.train_epoch()
-        await es.ainvoke("TRAINER_QUIT_EVENT", {})
+        await es.ainvoke(EventTypes.TRAINER_QUIT)
 
     @staticmethod
     async def train_epoch():
@@ -70,12 +79,13 @@ class Trainer:
             await t1
             batch_loss = t1.result()
             sum_loss += batch_loss
-            await es.ainvoke("BATCH_DONE_EVENT", {"batch_loss": batch_loss})
+            await es.ainvoke(EventTypes.BATCH_DONE, {"batch_loss": batch_loss})
             count += 1
-        await es.ainvoke("EPOCH_DONE_EVENT", {"loss": sum_loss / count})
+        Trainer._history.train_loss.append(sum_loss / count)
+        await es.ainvoke(EventTypes.EPOCH_DONE, Trainer._history)
 
     @staticmethod
-    @es.subscribe('SET_DATASET_PARAMS')
+    @es.subscribe(EventTypes.SET_DATASET_PARAMS)
     async def set_dataset_params(dataset_data):
         dataset = CSV_Dataset(dataset_data["path"], dataset_data["target_column"])
         Trainer.data_loader = DataLoader(dataset, batch_size=8, shuffle=True)
@@ -84,7 +94,7 @@ class Trainer:
 
 
     @staticmethod
-    @es.subscribe('APP_QUIT_EVENT')
+    @es.subscribe(EventTypes.APP_QUIT)
     async def quit_handler(event_data):
         Trainer._is_running = False
         log('TRAIN QUIT')

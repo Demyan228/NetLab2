@@ -1,5 +1,5 @@
 import asyncio
-from event_system import EventSystem as es
+from event_system import EventSystem as es, EventTypes
 from components import Assembler, Trainer, GUI
 
 class App:
@@ -10,7 +10,7 @@ class App:
         self.assembler = Assembler()
 
     async def initialize(self):
-        await es.ainvoke('APP_START_EVENT', '')
+        await es.ainvoke(EventTypes.START_APP)
         await es.run()
 
     def run(self):

@@ -29,7 +29,7 @@ def node(node_handler):
     def inner(*args, **kwargs):
         x, y = d.get_mouse_pos(local=False)
         pos = x + BIAS_X, y + BIAS_Y
-        node_handler(pos=pos, parent="NE", *args, **kwargs)
+        node_handler(pos=pos, parent='NE', *args, **kwargs)
         d.hide_item("NEPOPUP")
     return inner
 
