@@ -8,8 +8,12 @@ debug = True
 ###    GUI    ###
 monitor = get_monitors()[0]
 DW, DH = monitor.width, monitor.height - 50
-indent = DW // 60
-FPS = 40
+FPS = 20
+
+MAIN_FONT = os.path.join('resources', 'font.ttf')
+MAIN_FONT_SIZE = 40
+
+
 
 ###   DATA   ###
 default_dataset_path = 'C:\\Users\\bubno\\Downloads'
@@ -24,7 +28,6 @@ default_criterian = "MAE"
 
 
 if os.name == 'posix':
-    print('POSIX')
     DH += 50
-    default_dataset_path = '~/datasets/'
+    default_dataset_path = '/home/user/datasets/'
     TEST_DATASET = 'test.csv'

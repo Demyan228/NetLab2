@@ -1,0 +1,8 @@
+from dearpygui import dearpygui as d
+from components.Gui import callbacks as cb
+
+
+def init_handler_registry():
+    with d.handler_registry():
+        d.add_mouse_click_handler(callback=cb.ne_popup_callback, button=1)
+        d.add_key_press_handler(key=d.mvKey_M, callback=cb.visible_map_callback)

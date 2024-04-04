@@ -1,4 +1,4 @@
-from event_system import EventSystem as es
+from event_system import EventSystem as es, EventTypes
 from components.backend.PyTorchBackend import PyTorchBackend
 from common import log
 
@@ -14,14 +14,14 @@ class Assembler:
 
 
     @staticmethod
-    @es.subscribe("ASSEMBLE_MODEL_EVENT")
+    @es.subscribe(EventTypes.ASSEMBLE_MODEL)
     async def run(assemble_data):
         model_file_path = await Assembler.create_model(assemble_data["layers"])
         if Assembler._is_running:
-            await es.ainvoke('TRAIN_START_EVENT', {"model_file_path": model_file_path})
+            await es.ainvoke(EventTypes.TRAIN_START, {"model_file_path": model_file_path})
 
     @staticmethod
-    @es.subscribe("APP_QUIT_EVENT")
-    async def quit_handler(event_data):
+    @es.subscribe(EventTypes.APP_QUIT)
+    async def quit_handler(_):
         Assembler._is_running = False
         log('ASSEMBLER QUIT')
