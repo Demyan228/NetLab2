@@ -57,32 +57,36 @@ class Trainer:
         Trainer.optimizer = Trainer.optimizer_type(Trainer.model.parameters(), Trainer.learning_rate)
         asyncio.get_running_loop().create_task(Trainer.train())
 
-
     @staticmethod
     async def train():
-        for _ in range(Trainer.train_epochs):
-            if not Trainer._is_running:
-                break
-            await Trainer.train_epoch()
-        await es.ainvoke(EventTypes.TRAINER_QUIT)
-
-    @staticmethod
-    async def train_epoch():
-        sum_loss = 0
-        count = 0
-        for batch in Trainer.data_loader:
+        t = time()
+        for i in range(Trainer.train_epochs):
             if not Trainer._is_running:
                 break
             loop = asyncio.get_running_loop()
-            train_batch = partial(PyTorchBackend.train_batch, Trainer.model, batch, Trainer.loss_fn, Trainer.optimizer)
-            t1 = loop.run_in_executor(ppe, train_batch)
+            train_epoch = partial(Trainer.train_epoch, Trainer.model, Trainer.loss_fn, Trainer.optimizer,
+                                  Trainer.data_loader)
+            t1 = loop.run_in_executor(ppe, train_epoch)
             await t1
-            batch_loss = t1.result()
+            Trainer._history.train_loss.append(t1.result())
+            await es.ainvoke(EventTypes.EPOCH_DONE, {"history": Trainer._history})
+        log("train done for ", time() - t, "s")
+        await es.ainvoke(EventTypes.TRAINER_QUIT)
+
+    @staticmethod
+    def train_epoch(model, loss_fn, optimizer, data_loader):
+        sum_loss = 0
+        count = 0
+        sum_data_means = 0
+        for batch in data_loader:
+            if not Trainer._is_running:
+                break
+            batch_loss = PyTorchBackend.train_batch(model, batch, loss_fn, optimizer)
+            _, y = batch
+            sum_data_means += sum(y) / len(y)
             sum_loss += batch_loss
-            await es.ainvoke(EventTypes.BATCH_DONE, {"batch_loss": batch_loss})
             count += 1
-        Trainer._history.train_loss.append(sum_loss / count)
-        await es.ainvoke(EventTypes.EPOCH_DONE, Trainer._history)
+        return sum_loss / count
 
     @staticmethod
     @es.subscribe(EventTypes.SET_DATASET_PARAMS)
@@ -97,3 +101,4 @@ class Trainer:
     async def quit_handler(event_data):
         Trainer._is_running = False
         log('TRAIN QUIT')
+

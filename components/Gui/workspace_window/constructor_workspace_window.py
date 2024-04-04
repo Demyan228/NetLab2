@@ -138,7 +138,7 @@ def load_constructor_workspace():
                             tag=Tags.START_TRAIN_BUTTON, 
                             label='Train', 
                             width=main_config.DW // 20, 
-                            indent=(gui_config.INDENT + gui_config.PADDING_BUTTONS_HYPERPARAMS + gui_config.HYPERPARAMS_BUTTON_WIDTH)*3 + 100,
+                            indent=(gui_config.INDENT + gui_config.PADDING_BUTTONS_HYPERPARAMS + gui_config.HYPERPARAMS_BUTTON_WIDTH)*3,
                             )
                 d.add_spacer(height=int(gui_config.INDENT / 2.5))
                 d.add_separator()
