@@ -3,6 +3,7 @@ import dearpygui.dearpygui as d
 import config
 from config import DW, DH, indent, default_dataset_path
 import components.Gui.callbacks as cb
+from components.Gui import core
 
 
 d.create_context()
@@ -27,7 +28,6 @@ with d.window(tag="WindowNodeEditor", width=DW // 1.8, height=DH - indent * 3, p
             minimap_location=d.mvNodeMiniMap_Location_BottomRight
     ):
         pass
-
 with d.window(tag='WindowHyperparams', width=DW - indent * 3 - DW // 1.8, height=DH // 3,
               pos=(DW // 1.8 + indent * 2, indent), no_title_bar=True, no_resize=True, no_move=True):
     d.add_text('Hyperparams', tag='HyperparamsTextLabel', pos=(DW // 6, indent // 2))
@@ -42,6 +42,11 @@ with d.window(tag='WindowHyperparams', width=DW - indent * 3 - DW // 1.8, height
                 default_value=config.default_optimizer, callback=cb.debug_callback)
     d.add_combo(tag='HyperparamsCriterian', label=' Loss', width=DW // 10, indent=indent,
                 items=['MSE', "MAE", 'RMSE', 'BCE', 'CCE'], default_value='MAE')
+
+
+    d.add_input_text(tag="StructName", label="StructName", width=DW // 15)
+    d.add_button(tag="SaveButton", label="SaveModel", callback=cb.save_model_struct_callback, width=DW // 20, indent=indent)
+    d.add_combo(tag="ChooseModel", label="ChooseModel", width=DW // 15, indent=indent, items=core.get_saved_model_names(), default_value="None")
     d.add_spacer(height=indent // 2.5)
     d.add_separator()
     d.add_spacer(height=indent // 2.5)

@@ -9,11 +9,12 @@ debug = True
 monitor = get_monitors()[0]
 DW, DH = monitor.width, monitor.height - 50
 indent = DW // 60
-FPS = 20
+FPS = 40
 
 ###   DATA   ###
 default_dataset_path = 'C:\\Users\\bubno\\Downloads'
 TEST_DATASET = 'netlab_test.csv'
+model_structs_path = 'model_structs'
 
 ###   TRAIN   ###
 default_train_epochs = 100

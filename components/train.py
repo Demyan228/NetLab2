@@ -75,7 +75,7 @@ class Trainer:
             sum_data_means += sum(y) / len(y)
             sum_loss += batch_loss
             count += 1
-        return (1 - sum_loss / sum_data_means) * 100
+        return sum_loss / count
 
     @staticmethod
     @es.subscribe('SET_DATASET_PARAMS')

@@ -19,6 +19,11 @@ class UUID:
             UUID.__generator = UUID.__node_uuid_generator()
         return next(UUID.__generator)
 
+def node_tag_generator():
+    i = 0
+    while True:
+        i += 1
+        yield i
 
 BIAS_X = -DW // 40
 BIAS_Y = -DW// 40
@@ -42,11 +47,12 @@ def output_node(tag: int|str=0):
     return d.node_attribute(attribute_type=d.mvNode_Attr_Output, tag=tag)
 
 Node = partial(d.node, parent='NE')
+node_tag_gen = node_tag_generator()
 
 @node
 def node_sigmoid(parent, pos):
     in_tag, out_tag = get_in_out_tags('SIGMOID')
-    with Node(label='Sigmoid', pos=pos):
+    with Node(label='Sigmoid', pos=pos, tag=get_node_tag('SIGMOID')):
         with d.node_attribute(attribute_type=d.mvNode_Attr_Input):
             d.add_input_int(tag=in_tag, step=0, width=NODE_WIDTH)
         with d.node_attribute(attribute_type=d.mvNode_Attr_Output):
@@ -56,7 +62,7 @@ def node_sigmoid(parent, pos):
 @node
 def node_softmax(parent, pos):
     in_tag, out_tag = get_in_out_tags('SOFTMAX')
-    with d.node(label='Softmax', pos=pos, parent=parent):
+    with d.node(label='Softmax', pos=pos, parent=parent, tag=get_node_tag('SOFTMAX')):
         with input_node():
             d.add_input_int(tag=in_tag, step=0, width=NODE_WIDTH)
         with output_node():
@@ -67,7 +73,7 @@ def node_input(parent, pos):
     if d.does_item_exist("start_node"):
         return
     _, out_tag = get_in_out_tags("INPUT")
-    with d.node(label="Input", pos=pos, parent=parent):
+    with d.node(label="Input", pos=pos, parent=parent, tag=get_node_tag("INPUT")):
         with output_node("start_node"):
             d.add_input_int(tag=out_tag, step=0, width=NODE_WIDTH)
 
@@ -75,7 +81,7 @@ def node_input(parent, pos):
 @node
 def node_linear_layers(parent, pos):
     in_tag, out_tag = get_in_out_tags("LINEAR")
-    with d.node(label="Linear", pos=pos, parent=parent):
+    with d.node(label="Linear", pos=pos, parent=parent, tag=get_node_tag("LINEAR")):
         with input_node():
             d.add_input_int(tag=in_tag, step=0, width=NODE_WIDTH)
         with output_node():
@@ -85,7 +91,7 @@ def node_linear_layers(parent, pos):
 @node
 def node_relu(parent, pos):
     in_tag, out_tag = get_in_out_tags("RELU")
-    with d.node(label="Relu", pos=pos, parent=parent):
+    with d.node(label="Relu", pos=pos, parent=parent, tag=get_node_tag("RELU")):
         with input_node():
             d.add_input_int(tag=in_tag, step=0, width=NODE_WIDTH)
         with output_node():
@@ -97,6 +103,12 @@ def get_in_out_tags(node_type: str):
     in_tag = f"{node_type}-{uuid}-IN"
     out_tag = f"{node_type}-{uuid}-OUT"
     return in_tag, out_tag
+
+
+def get_node_tag(node_type):
+    tag = f"{node_type}{next(node_tag_gen)}"
+    core.all_nodes_tags.append(tag)
+    return tag
 
 
 NODES = {

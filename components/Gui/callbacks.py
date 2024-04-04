@@ -1,9 +1,15 @@
+import os
+from collections import defaultdict
+
 from dearpygui import dearpygui as d
+
+import config
 from common import log
 from components.Gui.nodes import NODES
 from components.Gui.core import links_graph, links_elements
 from components.Gui import core
 import pandas as pd
+import pickle
 
 def create_csv_table(csv_file):
     df = pd.read_csv(csv_file, encoding="utf8")
@@ -65,6 +71,38 @@ def load_file_callback(sender, app_data):
     file_path = list(app_data['selections'].values())[0]
     core.change_dataset_path(file_path)
     create_csv_table(file_path)
+
+def save_model_struct_callback(sender, app_data):
+    choosen_nodes = d.get_selected_nodes("WindowNodeEditor")
+    if not choosen_nodes:
+        choosen_nodes = [d.get_alias_id(i) for i in core.all_nodes_tags]
+    choosen_nodes = set(choosen_nodes)
+    nodes_conf = []
+    links_graph = defaultdict(list)
+    for n in choosen_nodes:
+        conf = d.get_item_configuration(n)
+        nodes_conf.append(conf)
+        links_graph[n] = [i for i in core.links_graph[n] if i in choosen_nodes]
+    struct_name = d.get_value("StructName")
+    if struct_name in os.listdir(config.model_structs_path):
+        i = 1
+        while f"{struct_name}({i}).txt" in os.listdir(config.model_structs_path):
+            i += 1
+        struct_name = f"{struct_name}({i})"
+    with open(f"{struct_name}.txt", "wb") as f:
+        file_info = {"nodes_conf": nodes_conf, "links_graph": links_graph}
+        pickle.dump(file_info, f)
+
+
+def load_model_struct(sender, app_data):
+    file_path = app_data["file_path"]
+    with open(file_path, "rb") as f:
+        obj = pickle.load(f)
+        
+
+
+
+
 
 
 def debug_callback(sender, app_data, user_data):
