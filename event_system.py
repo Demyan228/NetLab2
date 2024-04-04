@@ -23,6 +23,7 @@ class EventTypes:
     SET_DATASET_PARAMS = get_event_type()
     TRAIN_START = get_event_type()
     TRAINER_QUIT = get_event_type()
+    CHANGE_WORKSPACE_WINDOW = get_event_type()
 
 
 class EventSystem:
@@ -35,16 +36,7 @@ class EventSystem:
             event_type, event_data = await EventSystem.query.get()
             handlers = EventSystem.subscribers[event_type]
             tasks = [handler(event_data) for handler in handlers]
-#             if not any(tasks):
-#                 continue
-            try: 
-                await asyncio.gather(*tasks)
-            except Exception as e:
-                print(f'{len(tasks) = } | {event_type = } | {handlers = }')
-                for t in tasks:
-                    print(t)
-                print('------------')
-                raise e
+            await asyncio.gather(*tasks)
             if event_type == EventTypes.APP_QUIT:
                 break
 

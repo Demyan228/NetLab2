@@ -36,7 +36,6 @@ class PyTorchBackend:
             load_model = partial(torch.load, model_file_path)
             t1 = loop.run_in_executor(pool, load_model)
             await t1
-            log(t1.result())
             return t1.result()
 
 

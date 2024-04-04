@@ -92,7 +92,6 @@ class Trainer:
         Trainer._is_dataset_initialized = True
 
 
-
     @staticmethod
     @es.subscribe(EventTypes.APP_QUIT)
     async def quit_handler(event_data):

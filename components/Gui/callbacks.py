@@ -103,7 +103,6 @@ def delink_callback(_, app_data):
 
 
 def link_callback(sender, app_data):
-    print(f'{app_data = }')
     left, right = app_data
     links_graph[left].append(right)
     link = d.add_node_link(left, right, parent=sender)

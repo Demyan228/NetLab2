@@ -1,9 +1,7 @@
 import asyncio
 from time import time
 from dearpygui import dearpygui as d
-import os
 from common import log
-from components.Gui.callbacks import create_csv_table, link_callback, load_file_callback
 from event_system import EventSystem as es, EventTypes
 import config as main_config
 import components.Gui.config as gui_config
@@ -13,8 +11,7 @@ from components.Gui import core
 from components.Gui.tags import Tags
 from components.Gui.workspace_window.constructor_workspace_window import load_constructor_workspace
 from components.Gui.workspace_window.train_workspace_window import load_train_workspace
-
-from components.Gui.nodes import get_in_out_tags, input_node, output_node
+from components.Gui.test_configuration import init as test_init
 
 
 def _dpg_pre_init():
@@ -24,39 +21,13 @@ def _dpg_pre_init():
         d.bind_font(font)
     d.create_viewport(width=main_config.DW, height=main_config.DH, title='Net Lab', x_pos=0, y_pos=0)
 
-NODE_WIDTH = main_config.DW // 20
-def node_input(parent, pos):
-    if d.does_item_exist("start_node"):
-        return
-    _, out_tag = get_in_out_tags("INPUT")
-    with d.node(label="Input", pos=pos, parent=parent):
-        with output_node("start_node"):
-            d.add_input_int(tag=out_tag, step=0, width=NODE_WIDTH, default_value=6)
-
-
-def node_linear_layers(parent, pos):
-    in_tag, out_tag = get_in_out_tags("LINEAR")
-    with d.node(label="Linear", pos=pos, parent=parent):
-        with input_node():
-            d.add_input_int(tag=in_tag, step=0, width=NODE_WIDTH)
-        with output_node():
-            d.add_input_int(tag=out_tag, step=0, width=NODE_WIDTH, default_value=1)
 
 def _dpg_post_init():
     init_handler_registry()
     d.set_primary_window(Tags.PRIMARY_WINDOW, True)
     d.setup_dearpygui()
     d.show_viewport()
-    ##########################################  
-    node_input(parent='NE', pos=(100, 100))
-    node_linear_layers(parent='NE', pos=(400, 100))
-    link_callback('NE', (82, 85))
-    file_path = os.path.join(main_config.default_dataset_path, main_config.TEST_DATASET)
-    core.change_dataset_path(file_path)
-    create_csv_table(file_path)
-    d.configure_item('TargetColumn', default_value='charges')
-    ##########################################  
-
+#     test_init()
 
 
 class PrimaryWindow:
@@ -142,6 +113,7 @@ class GUI:
         es.invoke(EventTypes.SET_HYPERPARAMS, {"lr": lr, "optimizer": optimizer, "criterian": criterian, 'num_epochs': num_epochs})
         es.invoke(EventTypes.SET_DATASET_PARAMS, {"path": core.current_dataset_path, "target_column": target_column})
         es.invoke(EventTypes.ASSEMBLE_MODEL, {"layers": layers})
+        GUI._primary_window.change_workspace_window(Tags.TRAIN)
 
     @staticmethod
     @es.subscribe(EventTypes.START_APP)
@@ -149,11 +121,6 @@ class GUI:
         GUI.init()
         loop = asyncio.get_running_loop()
         loop.create_task(GUI.update())
-
-    @staticmethod
-#     @es.subscribe(EventTypes.EPOCH_DONE)
-    async def print_epoch_info(history):
-        log(f'[{history.train_loss = }]')
 
     @staticmethod
     @es.subscribe(EventTypes.APP_QUIT)
