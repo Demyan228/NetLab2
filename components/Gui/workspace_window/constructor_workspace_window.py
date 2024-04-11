@@ -1,46 +1,94 @@
-import dearpygui.dearpygui as d
 from numpy import random
+from sklearn import os
+import common
+import sklearn.datasets
+import pandas as pd
+import dearpygui.dearpygui as d
+
 import config as main_config
 import components.Gui.config as gui_config
 import components.Gui.callbacks as cb
-from components.Gui.tags import Tags
+from components.Gui.tags import Tags, CreateDatasetTags as CTags
 
 
-def create_dataset_callback(sender, app_data):
+class DatasetCreator:
+
+    _current_dataset_type = CTags.CLASSIFICATION
+
+    @staticmethod
+    def change_dataset_type_callback(sender, app_data):
+        DatasetCreator._current_dataset_type = d.get_item_alias(app_data)
+
+    @staticmethod
+    def _create_dataset_classification():
+        n_samples = d.get_value(CTags.N_SAMPLES)
+        n_features = d.get_value(CTags.N_FEATURES)
+        n_classes = d.get_value(CTags.N_CLASSES)
+        data_x, data_y = sklearn.datasets.make_classification(
+                n_samples=n_samples,
+                n_features=n_features,
+                n_classes=n_classes,
+                )
+        dataset = pd.DataFrame(data_x, columns=[f'F{i}' for i in range(n_features)])
+        dataset['Y'] = pd.Series(data_y)
+        if not os.path.exists(main_config.TMP_FOLDER_PATH):
+            os.makedirs(main_config.TMP_FOLDER_PATH)
+        dataset.to_csv(main_config.CUSTOM_DATASET_PATH, index=False)
+        cb.create_csv_table(main_config.CUSTOM_DATASET_PATH)
+
+    @staticmethod
+    def _create_dataset_regression():
+        pass
+
+    @staticmethod
+    def create_dataset_callback(sender, app_data, user_data):
+        {
+            CTags.CLASSIFICATION: DatasetCreator._create_dataset_classification,
+            CTags.REGRESSION: DatasetCreator._create_dataset_regression,
+        }[DatasetCreator._current_dataset_type]()
+        d.hide_item(CTags.CREATOR_WINDOW)
+
+
+
+def create_dataset_regression(n_samples: int, n_features: int, n_outputs: int):
+    pass
+
+
+def create_dataset_window_callback(sender, app_data):
     padding = ' '
-    with d.window(modal=True):
-        with d.tab_bar():
-            with d.tab(label='Classification'):
+    if d.does_alias_exist(CTags.CREATOR_WINDOW):
+        d.show_item(CTags.CREATOR_WINDOW)
+        return
+    with d.window(tag=CTags.CREATOR_WINDOW, modal=True):
+        with d.tab_bar(tag='TB', callback=DatasetCreator.change_dataset_type_callback):
+            with d.tab(label='Classification', tag=CTags.CLASSIFICATION):
                 d.add_spacer(height=int(gui_config.INDENT / 2.5))
                 with d.group(horizontal=True):
-                    samples_tag = 'SamplesTag'
                     def set_samples_value_cb(sender, _, value):
-                        d.set_value(samples_tag, value)
+                        d.set_value(CTags.N_SAMPLES, value)
                     d.add_text(' Samples: ')
                     d.add_text(padding)
-                    d.add_slider_int(tag=samples_tag, default_value=100, width=100, max_value=10000)
+                    d.add_slider_int(tag=CTags.N_SAMPLES, default_value=100, width=100, max_value=10000)
                     d.add_text(padding)
                     d.add_button(label='10', width=100, callback=set_samples_value_cb, user_data=10)
                     d.add_button(label='100', width=100, callback=set_samples_value_cb, user_data=100)
                     d.add_button(label='1000', width=100, callback=set_samples_value_cb, user_data=1000)
                 with d.group(horizontal=True):
-                    features_tag = 'FeaturesTag'
                     def set_features_value_cb(sender, _, value):
-                        d.set_value(features_tag, value)
+                        d.set_value(CTags.N_FEATURES, value)
                     d.add_text(' Features:')
                     d.add_text(padding)
-                    d.add_slider_int(tag=features_tag, default_value=4, width=100)
+                    d.add_slider_int(tag=CTags.N_FEATURES, default_value=4, width=100)
                     d.add_text(padding)
                     d.add_button(label='2', width=100, callback=set_features_value_cb, user_data=2)
                     d.add_button(label='4', width=100, callback=set_features_value_cb, user_data=4)
                     d.add_button(label='8', width=100, callback=set_features_value_cb, user_data=8)
                 with d.group(horizontal=True):
-                    classes_tag = 'ClassesTag'
                     def set_classes_value_cb(sender, _, value):
-                        d.set_value(classes_tag, value)
+                        d.set_value(CTags.N_CLASSES, value)
                     d.add_text(' Classes: ')
                     d.add_text(padding)
-                    d.add_slider_int(tag=classes_tag, default_value=2, width=100)
+                    d.add_slider_int(tag=CTags.N_CLASSES, default_value=2, width=100)
                     d.add_text(padding)
                     d.add_button(label='2', width=100, callback=set_classes_value_cb, user_data=2)
                     d.add_button(label='4', width=100, callback=set_classes_value_cb, user_data=4)
@@ -52,16 +100,16 @@ def create_dataset_callback(sender, app_data):
                     d.add_input_int(default_value=random.randint(1, 1_000_000_000), step=0, width=300)
                     d.add_text(' ')
                     d.add_checkbox(default_value=True)
-            with d.tab(label='Regression'):
+            with d.tab(label='Regression', tag=CTags.REGRESSION):
                 pass
 
         d.add_spacer(height=int(gui_config.INDENT / 2.5))
         with d.group(horizontal=True):
             d.add_button(label='Random', indent=20, width=180)
             d.add_text(' ')
-            d.add_button(label='Create', width=180)
+            d.add_button(label='Create', width=180, callback=DatasetCreator.create_dataset_callback)
             d.add_text(' ')
-            d.add_button(label='Cancel', width=180)
+            d.add_button(label='Cancel', width=180, callback=lambda _: d.hide_item(CTags.CREATOR_WINDOW))
         d.add_spacer(height=int(gui_config.INDENT / 5))
 
 
@@ -123,7 +171,7 @@ def load_constructor_workspace():
                     d.add_button(
                             tag='DatasetCreateButton', 
                             label='Create', 
-                            callback=create_dataset_callback, 
+                            callback=create_dataset_window_callback, 
                             width=gui_config.HYPERPARAMS_BUTTON_WIDTH, 
                             indent=gui_config.INDENT + gui_config.HYPERPARAMS_BUTTON_WIDTH + gui_config.PADDING_BUTTONS_HYPERPARAMS,
                              )

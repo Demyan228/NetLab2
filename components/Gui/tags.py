@@ -22,3 +22,14 @@ class Tags:
     TRAIN_PLOT_X_AXIS = get_tag()
     TRAIN_PLOT_Y_AXIS = get_tag()
 
+
+
+class CreateDatasetTags:
+    CREATOR_WINDOW = get_tag()
+    CLASSIFICATION = get_tag()
+    REGRESSION = get_tag()
+
+    N_SAMPLES = get_tag()
+    N_FEATURES = get_tag()
+    N_CLASSES = get_tag()
+
