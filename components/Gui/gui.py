@@ -1,16 +1,18 @@
 import asyncio
 from time import time
+
 from dearpygui import dearpygui as d
 from common import log
 from event_system import EventSystem as es, EventTypes
 import config as main_config
 import components.Gui.config as gui_config
 from components.Gui.handler_registry import init_handler_registry
-from components.Gui.core import links_graph
+from components.Gui.nodes import NodeMaster
 from components.Gui import core
 from components.Gui.tags import Tags
 from components.Gui.workspace_window.constructor_workspace_window import load_constructor_workspace
 from components.Gui.workspace_window.train_workspace_window import load_train_workspace
+from components.backend.Layers import LayerNames
 from components.Gui.test_configuration import init as test_init
 
 
@@ -27,7 +29,7 @@ def _dpg_post_init():
     d.set_primary_window(Tags.PRIMARY_WINDOW, True)
     d.setup_dearpygui()
     d.show_viewport()
-#     test_init()
+    test_init()
 
 
 class PrimaryWindow:
@@ -83,14 +85,14 @@ class GUI:
 
     @staticmethod
     def get_model_layers():
-        if not d.does_item_exist("start_node"):
+        if not d.does_item_exist(LayerNames.Input + "1"):
             log("warning vse ploxo")
             return []
         layers = []
-        cur_attr = d.get_alias_id("start_node")
-        while len(links_graph[d.get_item_children(d.get_item_parent(cur_attr))[1][-1]]) != 0:
+        cur_attr = d.get_item_children(d.get_alias_id(LayerNames.Input + "1"))[1][-1]
+        while len(NodeMaster.links_graph[d.get_item_children(d.get_item_parent(cur_attr))[1][-1]]) != 0:
             par = d.get_item_parent(cur_attr)
-            cur_attr = links_graph[d.get_item_children(par)[1][-1]][0]
+            cur_attr = NodeMaster.links_graph[d.get_item_children(par)[1][-1]][0]
             layer = {}
             inp_attr = cur_attr
             node = d.get_item_parent(inp_attr)

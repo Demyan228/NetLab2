@@ -1,8 +1,10 @@
+from collections import defaultdict
+
 import dearpygui.dearpygui as d
 from itertools import count
-from functools import partial
-from config import DW, DH
-from components.Gui import core
+from components.Gui.config import NODE_PARAM_WIDTH
+from components.backend.Layers import LayerNames
+from components.backend.PyTorchBackend import PyTorchBackend as Backend
 
 
 class UUID:
@@ -25,18 +27,63 @@ def node_tag_generator():
         i += 1
         yield i
 
-BIAS_X = -DW // 40
-BIAS_Y = -DW// 40
-NODE_WIDTH = DW // 20
+
+node_tag_gen = node_tag_generator()
+def get_node_tag(node_type):
+    tag = f"{node_type}{next(node_tag_gen)}"
+    return tag
+
+class NodeMaster:
+    all_nodes_tags = []
+    links_graph = defaultdict(list)
+    links_elements = {}
+
+    @staticmethod
+    def create_node(layer_name, pos):
+        params = Backend.get_layer_parameters_name(layer_name)
+        tag = get_node_tag(layer_name)
+        NodeMaster.all_nodes_tags.append(tag)
+        with d.node(label=layer_name, pos=pos, tag=tag, parent="NE"):
+            for inp_name in params.inputs:
+                with input_node():
+                    d.add_input_int(tag=tag+"-"+inp_name, step=0, width=NODE_PARAM_WIDTH)
+            for out_name in params.outputs:
+                with output_node():
+                    d.add_input_int(tag=tag+"-"+out_name, step=0, width=NODE_PARAM_WIDTH)
+            for other_name in params.other_params:
+                d.add_input_int(tag=tag+"-"+other_name, step=0, width=NODE_PARAM_WIDTH)
+
+    @staticmethod
+    def create_nodes(nodes):
+        for params in nodes:
+            NodeMaster.create_node(*params)
+
+    @staticmethod
+    def create_link(left, right, sender="NE"):
+        NodeMaster.links_graph[left].append(right)
+        link = d.add_node_link(left, right, parent=sender)
+        NodeMaster.links_elements[link] = (left, right)
+        left_output = d.get_item_alias(d.get_item_children(left)[1][0])
+        right_input = d.get_item_alias(d.get_item_children(right)[1][0])
+        d.set_item_source(right_input, left_output)
+        for func in [LayerNames.Relu, LayerNames.Sigmoid, LayerNames.Softmax]:
+            if func in right_input:
+                out_id = right_input.replace("in_features", "out_features")
+                d.set_item_source(out_id, left_output)
 
 
-def node(node_handler):
-    def inner(*args, **kwargs):
-        x, y = d.get_mouse_pos(local=False)
-        pos = x + BIAS_X, y + BIAS_Y
-        node_handler(pos=pos, parent='NE', *args, **kwargs)
-        d.hide_item("NEPOPUP")
-    return inner
+    @staticmethod
+    def delete_link(link_id):
+        left, right = NodeMaster.links_elements[link_id]
+        NodeMaster.links_graph[left].remove(right)
+        d.delete_item(link_id)
+        del NodeMaster.links_elements[link_id]
+
+
+    @staticmethod
+    def create_links(links, sender="NE"):
+        for params in links:
+            NodeMaster.create_link(*params, sender=sender)
 
 
 def input_node():
@@ -46,76 +93,4 @@ def input_node():
 def output_node(tag: int|str=0):
     return d.node_attribute(attribute_type=d.mvNode_Attr_Output, tag=tag)
 
-Node = partial(d.node, parent='NE')
-node_tag_gen = node_tag_generator()
 
-@node
-def node_sigmoid(parent, pos):
-    in_tag, out_tag = get_in_out_tags('SIGMOID')
-    with Node(label='Sigmoid', pos=pos, tag=get_node_tag('SIGMOID')):
-        with d.node_attribute(attribute_type=d.mvNode_Attr_Input):
-            d.add_input_int(tag=in_tag, step=0, width=NODE_WIDTH)
-        with d.node_attribute(attribute_type=d.mvNode_Attr_Output):
-            d.add_input_int(tag=out_tag, step=0, width=NODE_WIDTH)
-
-
-@node
-def node_softmax(parent, pos):
-    in_tag, out_tag = get_in_out_tags('SOFTMAX')
-    with d.node(label='Softmax', pos=pos, parent=parent, tag=get_node_tag('SOFTMAX')):
-        with input_node():
-            d.add_input_int(tag=in_tag, step=0, width=NODE_WIDTH)
-        with output_node():
-            d.add_input_int(tag=out_tag, step=0, width=NODE_WIDTH)
-
-@node
-def node_input(parent, pos):
-    if d.does_item_exist("start_node"):
-        return
-    _, out_tag = get_in_out_tags("INPUT")
-    with d.node(label="Input", pos=pos, parent=parent, tag=get_node_tag("INPUT")):
-        with output_node("start_node"):
-            d.add_input_int(tag=out_tag, step=0, width=NODE_WIDTH)
-
-
-@node
-def node_linear_layers(parent, pos):
-    in_tag, out_tag = get_in_out_tags("LINEAR")
-    with d.node(label="Linear", pos=pos, parent=parent, tag=get_node_tag("LINEAR")):
-        with input_node():
-            d.add_input_int(tag=in_tag, step=0, width=NODE_WIDTH)
-        with output_node():
-            d.add_input_int(tag=out_tag, step=0, width=NODE_WIDTH)
-
-
-@node
-def node_relu(parent, pos):
-    in_tag, out_tag = get_in_out_tags("RELU")
-    with d.node(label="Relu", pos=pos, parent=parent, tag=get_node_tag("RELU")):
-        with input_node():
-            d.add_input_int(tag=in_tag, step=0, width=NODE_WIDTH)
-        with output_node():
-            d.add_input_int(tag=out_tag, step=0, width=NODE_WIDTH)
-
-
-def get_in_out_tags(node_type: str):
-    uuid = UUID.get_node_uuid()
-    in_tag = f"{node_type}-{uuid}-IN"
-    out_tag = f"{node_type}-{uuid}-OUT"
-    return in_tag, out_tag
-
-
-def get_node_tag(node_type):
-    tag = f"{node_type}{next(node_tag_gen)}"
-    core.all_nodes_tags.append(tag)
-    return tag
-
-
-NODES = {
-    "input": node_input,
-    "linear": node_linear_layers,
-    "sep": None,
-    "relu": node_relu,
-    "sigmoid": node_sigmoid,
-    "softmax": node_softmax,
-}
