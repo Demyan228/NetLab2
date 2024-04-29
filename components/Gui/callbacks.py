@@ -106,7 +106,7 @@ def load_model_struct(sender, app_data):
 def user_create_node(sender, app_data, layer_name):
     pos = d.get_item_pos("NEPOPUP")
     pos = pos[0] + BIAS_X, pos[1] + BIAS_Y
-    NodeMaster.create_node(layer_name, pos)
+    NodeMaster.create_default_node(layer_name, pos)
     d.hide_item("NEPOPUP")
 
 

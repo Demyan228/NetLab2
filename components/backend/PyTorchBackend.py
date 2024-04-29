@@ -80,8 +80,8 @@ class PyTorchBackend:
         return loss.item()
 
     @staticmethod
-    def get_layer_parameters_name(layer_name: str, expanded=False):
-        return PyTorchBackend.layers[layer_name].get_parameters_name(expanded=expanded)
+    def get_layer_attributes_type(layer_name: str, expanded=False):
+        return PyTorchBackend.layers[layer_name].get_attributes_type(expanded=expanded)
 
     @staticmethod
     def get_all_layer_names():

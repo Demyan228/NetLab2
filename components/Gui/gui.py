@@ -1,4 +1,5 @@
 import asyncio
+import os
 from time import time
 
 from dearpygui import dearpygui as d
@@ -68,6 +69,7 @@ class GUI:
         GUI._primary_window = PrimaryWindow()
         _dpg_post_init()
         d.set_item_callback(Tags.START_TRAIN_BUTTON, GUI.assemble_callback)
+        NodeMaster.load_nodes_struct(os.path.join(main_config.model_structs_path, gui_config.autosave_filename))
 
     @staticmethod
     async def _delay():
@@ -128,5 +130,6 @@ class GUI:
     @es.subscribe(EventTypes.APP_QUIT)
     async def quit_handler(_):
         GUI._is_running = False
+        NodeMaster.save_nodes_struct(gui_config.autosave_filename, replace=True)
         d.destroy_context()
         log('GUI QUIT')
