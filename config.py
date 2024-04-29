@@ -19,6 +19,8 @@ MAIN_FONT_SIZE = 40
 default_dataset_path = 'C:\\Users\\bubno\\Downloads'
 TEST_DATASET = 'netlab_test.csv'
 model_structs_path = 'model_structs'
+if not os.path.exists(model_structs_path):
+    os.mkdir(model_structs_path)
 
 ###   TRAIN   ###
 default_train_epochs = 100

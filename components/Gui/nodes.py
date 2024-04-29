@@ -157,7 +157,7 @@ class NodeMaster:
     @staticmethod
     def load_nodes_struct(file_path):
         if not os.path.exists(file_path):
-            raise NotImplementedError("you has not struct in path: " + file_path)
+            return
         with open(file_path, "rb") as f:
             obj = pickle.load(f)
             nodes_conf, links = obj["nodes_conf"], obj["links_graph"]
