@@ -6,9 +6,9 @@ from concurrent.futures import ProcessPoolExecutor
 import asyncio
 from functools import partial
 
+
 def RMSE(target, prediction):
     return torch.sqrt(torch.nn.MSELoss()(target, prediction))
-
 
 
 class PyTorchBackend:

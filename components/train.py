@@ -7,7 +7,7 @@ from event_system import EventSystem as es, EventTypes
 from concurrent.futures import ProcessPoolExecutor , ThreadPoolExecutor
 from functools import partial
 from components.backend.PyTorchBackend import PyTorchBackend
-from components.DataSet.CSV_Dataset import CSV_Dataset
+from components.DataSet import datasets
 from torch.utils.data import DataLoader
 
 
@@ -65,16 +65,18 @@ class Trainer:
                 break
             loop = asyncio.get_running_loop()
             train_epoch = partial(Trainer.train_epoch, Trainer.model, Trainer.loss_fn, Trainer.optimizer,
-                                  Trainer.data_loader)
+                                  Trainer.dataset)
             t1 = loop.run_in_executor(ppe, train_epoch)
             await t1
-            Trainer._history.train_loss.append(t1.result())
+            train_loss, val_loss = t1.result()
+            Trainer._history.train_loss.append(train_loss)
+            Trainer._history.test_loss.append(val_loss)
             await es.ainvoke(EventTypes.EPOCH_DONE, {"history": Trainer._history})
         log("train done for ", time() - t, "s")
         await es.ainvoke(EventTypes.TRAINER_QUIT)
 
     @staticmethod
-    def train_epoch(model, loss_fn, optimizer, data_loader):
+    def _forward(model, loss_fn, optimizer, data_loader):
         sum_loss = 0
         count = 0
         sum_data_means = 0
@@ -86,15 +88,21 @@ class Trainer:
             sum_data_means += sum(y) / len(y)
             sum_loss += batch_loss
             count += 1
-        return sum_loss / count
+        return sum_loss / count if count > 0 else 0
+
+    @staticmethod
+    def train_epoch(model, loss_fn, optimizer, dataset): # ANOTHER PROCESS
+        log(f'{len(dataset.train_loader()) = }')
+        log(f'{len(dataset.val_loader()) = }' )
+        loss_train = Trainer._forward(model, loss_fn, optimizer, dataset.train_loader())
+        loss_val = Trainer._forward(model, loss_fn, optimizer, dataset.val_loader())
+        return loss_train , loss_val
 
     @staticmethod
     @es.subscribe(EventTypes.SET_DATASET_PARAMS)
     async def set_dataset_params(dataset_data):
-        dataset = CSV_Dataset(dataset_data["path"], dataset_data["target_column"])
-        Trainer.data_loader = DataLoader(dataset, batch_size=8, shuffle=True)
+        Trainer.dataset = datasets.get_dataset(dataset_data)
         Trainer._is_dataset_initialized = True
-
 
     @staticmethod
     @es.subscribe(EventTypes.APP_QUIT)

@@ -12,16 +12,18 @@ def get_tag():
 
 
 class Tags:
-    PRIMARY_WINDOW = get_tag()
-    SWITCH_PANEL_WINDOW = get_tag()
     CONSTRUCTOR = get_tag()
+    DATASET_TARGET_COLUMN = get_tag()
+    DATASET_TABLE = get_tag()
+    PRIMARY_WINDOW = get_tag()
+    START_TRAIN_BUTTON = get_tag()
+    SWITCH_PANEL_WINDOW = get_tag()
+    TABLE_PRESENTATION_WINDOW = get_tag()
+    TEST_LOSS_SERIES = get_tag()
     TRAIN = get_tag()
     TRAIN_LOSS_SERIES = get_tag()
-    TEST_LOSS_SERIES = get_tag()
-    START_TRAIN_BUTTON = get_tag()
     TRAIN_PLOT_X_AXIS = get_tag()
     TRAIN_PLOT_Y_AXIS = get_tag()
-
 
 
 class CreateDatasetTags:

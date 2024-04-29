@@ -2,7 +2,9 @@ import os
 from collections import defaultdict
 
 from dearpygui import dearpygui as d
+from pandas.core.dtypes.dtypes import np
 
+from components.Gui.tags import Tags
 import config
 from common import log
 from components.Gui.nodes import NODES
@@ -13,55 +15,29 @@ import pickle
 
 def create_csv_table(csv_file):
     df = pd.read_csv(csv_file, encoding="utf8")
-    d.configure_item("TargetColumn", items=df.columns.tolist())
-    if d.does_alias_exist('Table'):
-        d.delete_item('Table')
-    with d.tab_bar(tag='Table', parent='TableWindow'):
-        with d.tab(label='Presentation'):
-            with d.table(
-                    tag='TablePresentation', policy=d.mvTable_SizingStretchProp,
-                    borders_innerH=True, borders_outerH=False, borders_innerV=True, borders_outerV=False,
-                    scrollY=False,
-                    ):
-                if len(df.columns) > 7:
-                    columns = df.columns[0:3].tolist() + ['...'] + df.columns[-3:].tolist()
-                else:
-                    columns = df.columns
-                for col in columns:
-                    d.add_table_column(label=col)
-                if df.shape[0] > 28:
-                    num_rows = 28
-                else:
-                    num_rows = df.shape[0]
-                num_columns = len(columns)
-                for y in range(num_rows):
-                    with d.table_row():
-                        for x in range(num_columns):
-                            if x <= num_columns // 2:
-                                ix = x
-                            else:
-                                ix = df.shape[1] - 7 + x
-                            if y <= num_rows // 2:
-                                iy = y
-                            else:
-                                iy = df.shape[0] - 28 + y
-                            if x == 3 or y == 13:
-                                d.add_text('...')
-                            else:
-                                value = df.iloc[iy, ix]
-                                d.add_text(str(value))
-        with d.tab(label='Full'):
-            with d.table(
-                    tag='TableFull', resizable=True, policy=d.mvTable_SizingFixedSame,
-                    borders_innerH=True, borders_outerH=False, borders_innerV=True, borders_outerV=False,
-                    scrollX=True,
-                    ):
-                for col in df.columns:
-                    d.add_table_column(label=col)
-                for y in range(df.shape[0]):
-                    with d.table_row():
-                        for x in range(df.shape[1]):
-                            d.add_text(str(df.iloc[y, x]))
+    d.configure_item(Tags.DATASET_TARGET_COLUMN, items=df.columns.tolist())
+    if d.does_alias_exist(Tags.DATASET_TABLE):
+        d.delete_item(Tags.DATASET_TABLE)
+    with d.table(
+            tag=Tags.DATASET_TABLE, 
+            resizable=True, 
+            policy=d.mvTable_SizingFixedSame,
+            borders_innerH=True, 
+            borders_outerH=False, 
+            borders_innerV=True, 
+            borders_outerV=False,
+            scrollX=True,
+            parent=Tags.TABLE_PRESENTATION_WINDOW,
+            ):
+        for col in df.columns:
+            d.add_table_column(label=col)
+        for y in range(df.shape[0]):
+            with d.table_row():
+                for x in range(df.shape[1]):
+                    value = df.iloc[y, x]
+                    if type(value) == np.float64:
+                        value = round(value, 3)
+                    d.add_text(str(value))
 
 
 def choice_dataset_callback(sender, app_data):

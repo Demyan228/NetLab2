@@ -5,6 +5,7 @@ import sklearn.datasets
 import pandas as pd
 import dearpygui.dearpygui as d
 
+from components.Gui.core import change_dataset_path
 import config as main_config
 import components.Gui.config as gui_config
 import components.Gui.callbacks as cb
@@ -29,16 +30,29 @@ class DatasetCreator:
                 n_features=n_features,
                 n_classes=n_classes,
                 )
-        dataset = pd.DataFrame(data_x, columns=[f'F{i}' for i in range(n_features)])
-        dataset['Y'] = pd.Series(data_y)
+        dataset = pd.DataFrame(data_x, columns=[f' FEATURE-{i} ' for i in range(1, n_features + 1)])
+        dataset['TARGET'] = pd.Series(data_y)
         if not os.path.exists(main_config.TMP_FOLDER_PATH):
             os.makedirs(main_config.TMP_FOLDER_PATH)
         dataset.to_csv(main_config.CUSTOM_DATASET_PATH, index=False)
         cb.create_csv_table(main_config.CUSTOM_DATASET_PATH)
+        change_dataset_path(main_config.CUSTOM_DATASET_PATH)
 
     @staticmethod
     def _create_dataset_regression():
-        pass
+        n_samples = d.get_value(CTags.N_SAMPLES)
+        n_features = d.get_value(CTags.N_FEATURES)
+        data = sklearn.datasets.make_regression(
+                n_samples=n_samples,
+                n_features=n_features,
+                )
+#         log(f'[LOG] : {data = }')
+#         dataset = pd.DataFrame(data_x, columns=[f' FEATURE-{i} ' for i in range(1, n_features + 1)])
+#         dataset['TARGET'] = pd.Series(data_y)
+#         if not os.path.exists(main_config.TMP_FOLDER_PATH):
+#             os.makedirs(main_config.TMP_FOLDER_PATH)
+#         dataset.to_csv(main_config.CUSTOM_DATASET_PATH, index=False)
+#         cb.create_csv_table(main_config.CUSTOM_DATASET_PATH)
 
     @staticmethod
     def create_dataset_callback(sender, app_data, user_data):
@@ -63,53 +77,79 @@ def create_dataset_window_callback(sender, app_data):
         with d.tab_bar(tag='TB', callback=DatasetCreator.change_dataset_type_callback):
             with d.tab(label='Classification', tag=CTags.CLASSIFICATION):
                 d.add_spacer(height=int(gui_config.INDENT / 2.5))
-                with d.group(horizontal=True):
-                    def set_samples_value_cb(sender, _, value):
-                        d.set_value(CTags.N_SAMPLES, value)
-                    d.add_text(' Samples: ')
-                    d.add_text(padding)
-                    d.add_slider_int(tag=CTags.N_SAMPLES, default_value=100, width=100, max_value=10000)
-                    d.add_text(padding)
-                    d.add_button(label='10', width=100, callback=set_samples_value_cb, user_data=10)
-                    d.add_button(label='100', width=100, callback=set_samples_value_cb, user_data=100)
-                    d.add_button(label='1000', width=100, callback=set_samples_value_cb, user_data=1000)
-                with d.group(horizontal=True):
-                    def set_features_value_cb(sender, _, value):
-                        d.set_value(CTags.N_FEATURES, value)
-                    d.add_text(' Features:')
-                    d.add_text(padding)
-                    d.add_slider_int(tag=CTags.N_FEATURES, default_value=4, width=100)
-                    d.add_text(padding)
-                    d.add_button(label='2', width=100, callback=set_features_value_cb, user_data=2)
-                    d.add_button(label='4', width=100, callback=set_features_value_cb, user_data=4)
-                    d.add_button(label='8', width=100, callback=set_features_value_cb, user_data=8)
-                with d.group(horizontal=True):
-                    def set_classes_value_cb(sender, _, value):
-                        d.set_value(CTags.N_CLASSES, value)
-                    d.add_text(' Classes: ')
-                    d.add_text(padding)
-                    d.add_slider_int(tag=CTags.N_CLASSES, default_value=2, width=100)
-                    d.add_text(padding)
-                    d.add_button(label='2', width=100, callback=set_classes_value_cb, user_data=2)
-                    d.add_button(label='4', width=100, callback=set_classes_value_cb, user_data=4)
-                    d.add_button(label='8', width=100, callback=set_classes_value_cb, user_data=8)
-                d.add_spacer(height=int(gui_config.INDENT / 2.5))
-                with d.group(horizontal=True):
-                    d.add_text(' Random State:')
-                    d.add_text(padding)
-                    d.add_input_int(default_value=random.randint(1, 1_000_000_000), step=0, width=300)
-                    d.add_text(' ')
-                    d.add_checkbox(default_value=True)
+                with d.group():
+                    with d.group(horizontal=True):
+                        d.add_button(
+                                label='[EASY]', 
+                                callback=cb.choice_dataset_callback, 
+                                width=gui_config.HYPERPARAMS_BUTTON_WIDTH, 
+                                indent=gui_config.INDENT // 2
+                                 )
+                        d.add_button(
+                                label='[MEDIUM]', 
+                                callback=create_dataset_window_callback, 
+                                width=gui_config.HYPERPARAMS_BUTTON_WIDTH, 
+                                 )
+                        d.add_button(
+                                label='[HARD]', 
+                                callback=create_dataset_window_callback, 
+                                width=gui_config.HYPERPARAMS_BUTTON_WIDTH, 
+                                 )
+                    d.add_spacer(height=int(gui_config.INDENT / 2.5))
+                    with d.group(horizontal=True):
+                        def set_samples_value_cb(sender, _, value):
+                            d.set_value(CTags.N_SAMPLES, value)
+                        d.add_text(' Samples: ')
+                        d.add_text(padding)
+                        d.add_slider_int(tag=CTags.N_SAMPLES, default_value=100, width=100, max_value=10000)
+                        d.add_text(padding)
+                        d.add_button(label='10', width=100, callback=set_samples_value_cb, user_data=10)
+                        d.add_button(label='100', width=100, callback=set_samples_value_cb, user_data=100)
+                        d.add_button(label='1000', width=100, callback=set_samples_value_cb, user_data=1000)
+                    with d.group(horizontal=True):
+                        def set_features_value_cb(sender, _, value):
+                            d.set_value(CTags.N_FEATURES, value)
+                        d.add_text(' Features:')
+                        d.add_text(padding)
+                        d.add_slider_int(tag=CTags.N_FEATURES, default_value=4, width=100)
+                        d.add_text(padding)
+                        d.add_button(label='2', width=100, callback=set_features_value_cb, user_data=2)
+                        d.add_button(label='4', width=100, callback=set_features_value_cb, user_data=4)
+                        d.add_button(label='8', width=100, callback=set_features_value_cb, user_data=8)
+                    with d.group(horizontal=True):
+                        def set_classes_value_cb(sender, _, value):
+                            d.set_value(CTags.N_CLASSES, value)
+                        d.add_text(' Classes: ')
+                        d.add_text(padding)
+                        d.add_slider_int(tag=CTags.N_CLASSES, default_value=2, width=100)
+                        d.add_text(padding)
+                        d.add_button(label='2', width=100, callback=set_classes_value_cb, user_data=2)
+                        d.add_button(label='4', width=100, callback=set_classes_value_cb, user_data=4)
+                        d.add_button(label='8', width=100, callback=set_classes_value_cb, user_data=8)
+                    d.add_spacer(height=int(gui_config.INDENT / 2.5))
+                    with d.group(horizontal=True):
+                        d.add_text(' Random State:')
+                        d.add_text(padding)
+                        d.add_input_int(default_value=random.randint(1, 1_000_000_000), step=0, width=300)
+                        d.add_text(' ')
+                        d.add_checkbox(default_value=True)
             with d.tab(label='Regression', tag=CTags.REGRESSION):
                 pass
 
         d.add_spacer(height=int(gui_config.INDENT / 2.5))
         with d.group(horizontal=True):
-            d.add_button(label='Random', indent=20, width=180)
+            d.add_button(
+                    label='Create', 
+                    width=gui_config.DEFAULT_BUTTON_WIDTH, 
+                    callback=DatasetCreator.create_dataset_callback,
+                    indent=gui_config.INDENT // 4,
+                    )
             d.add_text(' ')
-            d.add_button(label='Create', width=180, callback=DatasetCreator.create_dataset_callback)
-            d.add_text(' ')
-            d.add_button(label='Cancel', width=180, callback=lambda _: d.hide_item(CTags.CREATOR_WINDOW))
+            d.add_button(
+                    label='Cancel', 
+                    width=gui_config.DEFAULT_BUTTON_WIDTH, 
+                    callback=lambda _: d.hide_item(CTags.CREATOR_WINDOW),
+                    )
         d.add_spacer(height=int(gui_config.INDENT / 5))
 
 
@@ -145,8 +185,7 @@ def load_constructor_workspace():
                 d.add_spacer(height=int(gui_config.INDENT / 2.5))
                 d.add_text('Hyperparams', tag='HyperparamsTextLabel', indent=label_indent)
                 d.add_spacer(height=int(gui_config.INDENT / 2.5))
-                d.add_input_double(tag='HyperparamsLearningRate', label=' LearningRate', width=main_config.DW // 10, indent=gui_config.INDENT,
-                                  min_value=0.000001, default_value=0.001, step=0)
+                d.add_input_double(tag='HyperparamsLearningRate', label=' LearningRate', width=main_config.DW // 10, indent=gui_config.INDENT, min_value=0.000001, default_value=0.001, step=0)
                 d.add_input_int(tag='HyperparamsBatchSize', label=' BatchSize', width=main_config.DW // 10, indent=gui_config.INDENT, min_value=1,
                                 default_value=64, step=16, step_fast=2)
                 d.add_slider_int(tag='HyperparamsNumEpochs', label=' Num Epochs', width=main_config.DW // 10, indent=gui_config.INDENT, min_value=1,
@@ -160,34 +199,34 @@ def load_constructor_workspace():
                 d.add_spacer(height=int(gui_config.INDENT / 2.5))
                 d.add_text('DataSet', tag='DatasetLabel', indent=label_indent)
                 d.add_spacer(height=int(gui_config.INDENT / 2.5))
-                with d.group(horizontal=True):
-                    d.add_button(
-                            tag='DatasetLoadButton', 
-                            label='Load', 
-                            callback=cb.choice_dataset_callback, 
-                            width=gui_config.HYPERPARAMS_BUTTON_WIDTH, 
-                            indent=gui_config.INDENT
-                             )
-                    d.add_button(
-                            tag='DatasetCreateButton', 
-                            label='Create', 
-                            callback=create_dataset_window_callback, 
-                            width=gui_config.HYPERPARAMS_BUTTON_WIDTH, 
-                            indent=gui_config.INDENT + gui_config.HYPERPARAMS_BUTTON_WIDTH + gui_config.PADDING_BUTTONS_HYPERPARAMS,
-                             )
-                    d.add_combo(
-                            tag='TargetColumn', 
-                            width=main_config.DW // 15, 
-                            items=["Choose dataset"], 
-                            default_value='[Target]',
-                            indent=(gui_config.INDENT + gui_config.PADDING_BUTTONS_HYPERPARAMS + gui_config.HYPERPARAMS_BUTTON_WIDTH)*2,
-                            )
-                    d.add_button(
-                            tag=Tags.START_TRAIN_BUTTON, 
-                            label='Train', 
-                            width=main_config.DW // 20, 
-                            indent=(gui_config.INDENT + gui_config.PADDING_BUTTONS_HYPERPARAMS + gui_config.HYPERPARAMS_BUTTON_WIDTH)*3,
-                            )
+                with d.group():
+                    with d.group(horizontal=True):
+                        d.add_button(
+                                label='Load', 
+                                callback=cb.choice_dataset_callback, 
+                                width=gui_config.HYPERPARAMS_BUTTON_WIDTH, 
+                                indent=gui_config.INDENT
+                                 )
+                        d.add_button(
+                                label='Create', 
+                                callback=create_dataset_window_callback, 
+                                width=gui_config.HYPERPARAMS_BUTTON_WIDTH, 
+                                indent=gui_config.INDENT + gui_config.HYPERPARAMS_BUTTON_WIDTH + gui_config.PADDING_BUTTONS_HYPERPARAMS,
+                                 )
+                        d.add_combo(
+                                tag=Tags.DATASET_TARGET_COLUMN,
+                                width=main_config.DW // 15, 
+                                items=["Choose dataset"], 
+                                default_value='[Target]',
+                                indent=(gui_config.INDENT + gui_config.PADDING_BUTTONS_HYPERPARAMS + gui_config.HYPERPARAMS_BUTTON_WIDTH)*2,
+                                )
+                        d.add_button(
+                                tag=Tags.START_TRAIN_BUTTON, 
+                                label='Train', 
+                                width=main_config.DW // 20, 
+                                indent=(gui_config.INDENT + gui_config.PADDING_BUTTONS_HYPERPARAMS + gui_config.HYPERPARAMS_BUTTON_WIDTH)*3,
+                                )
+
                 d.add_spacer(height=int(gui_config.INDENT / 2.5))
                 d.add_separator()
                 d.add_spacer(height=int(gui_config.INDENT / 2.5))
@@ -205,5 +244,5 @@ def load_constructor_workspace():
                     d.add_text('    ')
                     d.add_input_int(default_value=5, width=100, step=0)
 
-            with d.child_window(tag='TableWindow'):
+            with d.child_window(tag=Tags.TABLE_PRESENTATION_WINDOW):
                 pass

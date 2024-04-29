@@ -46,7 +46,12 @@ def load_train_workspace():
 @es.subscribe(EventTypes.EPOCH_DONE)
 async def update_series(event_data):
     history = event_data["history"]
-    X = list(range(1, len(history.train_loss) + 1))
-    d.set_value(Tags.TRAIN_LOSS_SERIES, [X, history.train_loss])
+    train_X = list(range(1, len(history.train_loss) + 1))
+    t = history.train_loss
+    v = history.test_loss
+    log(f'{t = } | {v = }')
+    val_X = list(range(1, len(history.test_loss) + 1))
+    d.set_value(Tags.TRAIN_LOSS_SERIES, [train_X, history.train_loss])
+    d.set_value(Tags.TEST_LOSS_SERIES, [val_X, history.test_loss])
     d.fit_axis_data(Tags.TRAIN_PLOT_X_AXIS)
     d.fit_axis_data(Tags.TRAIN_PLOT_Y_AXIS)

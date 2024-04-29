@@ -106,12 +106,13 @@ class GUI:
     def assemble_callback():
         lr = d.get_value("HyperparamsLearningRate")
         layers = GUI.get_model_layers()
-        target_column = d.get_value("TargetColumn")
+        target_column = d.get_value(Tags.DATASET_TARGET_COLUMN)
         criterian = d.get_value("HyperparamsCriterian")
         optimizer = d.get_value("HyperparamsOptimizer")
         num_epochs = d.get_value('HyperparamsNumEpochs')
+        batch_size = d.get_value('HyperparamsBatchSize')
         es.invoke(EventTypes.SET_HYPERPARAMS, {"lr": lr, "optimizer": optimizer, "criterian": criterian, 'num_epochs': num_epochs})
-        es.invoke(EventTypes.SET_DATASET_PARAMS, {"path": core.current_dataset_path, "target_column": target_column})
+        es.invoke(EventTypes.SET_DATASET_PARAMS, {"path": core.current_dataset_path, "target_column": target_column, "splits": [0.8, 0.1, 0.1], 'batch_size': batch_size})
         es.invoke(EventTypes.ASSEMBLE_MODEL, {"layers": layers})
         GUI._primary_window.change_workspace_window(Tags.TRAIN)
 
