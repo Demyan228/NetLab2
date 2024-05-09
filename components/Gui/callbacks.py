@@ -8,6 +8,7 @@ from common import log
 from components.Gui.nodes import NodeMaster
 from components.Gui import core
 from components.Gui.config import BIAS_X, BIAS_Y
+from config import DW, DH
 from components.backend.PyTorchBackend import PyTorchBackend as Backend
 import pandas as pd
 import pickle
@@ -75,32 +76,31 @@ def load_file_callback(sender, app_data):
     create_csv_table(file_path)
 
 def save_model_struct_callback(sender, app_data):
-    choosen_nodes = d.get_selected_nodes("WindowNodeEditor")
-    if not choosen_nodes:
-        choosen_nodes = [d.get_alias_id(i) for i in NodeMaster.all_nodes_tags]
-    choosen_nodes = set(choosen_nodes)
-    nodes_conf = []
-    links_graph = defaultdict(list)
-    for n in choosen_nodes:
-        conf = d.get_item_configuration(n)
-        nodes_conf.append(conf)
-        links_graph[n] = [i for i in NodeMaster.links_graph[n] if i in choosen_nodes]
-    struct_name = d.get_value("StructName")
-    if struct_name in os.listdir(config.model_structs_path):
-        i = 1
-        while f"{struct_name}({i}).txt" in os.listdir(config.model_structs_path):
-            i += 1
-        struct_name = f"{struct_name}({i})"
-    with open(f"{struct_name}.txt", "wb") as f:
-        file_info = {"nodes_conf": nodes_conf, "links_graph": links_graph}
-        pickle.dump(file_info, f)
+    struct_name = d.get_value("model_struct_name")
+    NodeMaster.save_struct(struct_name)
+    d.delete_item("save_struct_menu")
 
 
-def load_model_struct(sender, app_data):
-    file_path = app_data["file_path"]
-    with open(file_path, "rb") as f:
-        obj = pickle.load(f)
-        nodes_conf, links_graph = obj["nodes_conf"], obj["links_graph"]
+def open_save_struct_menu_callback(sender, app_data):
+    if d.does_item_exist("save_struct_menu"):
+        d.show_item("save_struct_menu")
+    else:
+        with d.window(label="Save model", tag="save_struct_menu", pos=(DW // 2, DH // 2), width=300, height=180):
+            d.add_input_text(id="model_struct_name", hint="struct name", width=300)
+            d.add_button(label="Save", callback=save_model_struct_callback, indent=100)
+
+
+def delete_key_pressed_callback(sender, app_data):
+    if d.does_item_exist("NE"):
+        NodeMaster.delete_selected()
+
+
+def open_load_struct_menu_callback(sender, app_data):
+    d.show_item("STRUCT_FILEDIALOG")
+
+def load_model_struct_callback(sender, app_data):
+    file_path = list(app_data['selections'].values())[0]
+    NodeMaster.load_nodes_struct(file_path)
 
         
 def user_create_node(sender, app_data, layer_name):
@@ -158,6 +158,11 @@ def show_node_menu_callback(_):
         ):
             for node_type in Backend.get_all_layer_names():
                 d.add_button(label=node_type, callback=user_create_node, user_data=node_type, width=200)
+            d.add_spacer()
+            d.add_separator()
+            d.add_spacer()
+            d.add_button(label="save", callback=open_save_struct_menu_callback, width=200)
+            d.add_button(label="load", callback=open_load_struct_menu_callback, width=200)
 
 def visible_map_callback(sender, app_data):
     minimap_visible = d.get_item_configuration("NE")["minimap"]

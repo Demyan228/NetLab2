@@ -1,5 +1,6 @@
 import asyncio
 import os
+from collections import defaultdict
 from time import time
 
 from dearpygui import dearpygui as d
@@ -87,14 +88,20 @@ class GUI:
 
     @staticmethod
     def get_model_layers():
-        if not d.does_item_exist(LayerNames.Input + "1"):
+        if not NodeMaster.get_start_node():
             log("warning vse ploxo")
             return []
+        links_graph = defaultdict(list)
+        for inp_node in NodeMaster.nodes_graph:
+            res = []
+            for out_node in NodeMaster.nodes_graph[inp_node]:
+                res.append(NodeMaster.get_input(out_node))
+            links_graph[NodeMaster.get_output(inp_node)] = res
         layers = []
-        cur_attr = d.get_item_children(d.get_alias_id(LayerNames.Input + "1"))[1][-1]
-        while len(NodeMaster.links_graph[d.get_item_children(d.get_item_parent(cur_attr))[1][-1]]) != 0:
+        cur_attr = d.get_item_children(d.get_alias_id(NodeMaster.get_start_node()))[1][-1]
+        while len(links_graph[d.get_item_children(d.get_item_parent(cur_attr))[1][-1]]) != 0:
             par = d.get_item_parent(cur_attr)
-            cur_attr = NodeMaster.links_graph[d.get_item_children(par)[1][-1]][0]
+            cur_attr = links_graph[d.get_item_children(par)[1][-1]][0]
             layer = {}
             inp_attr = cur_attr
             node = d.get_item_parent(inp_attr)
@@ -130,6 +137,6 @@ class GUI:
     @es.subscribe(EventTypes.APP_QUIT)
     async def quit_handler(_):
         GUI._is_running = False
-        NodeMaster.save_nodes_struct(gui_config.autosave_filename, replace=True)
+        NodeMaster.save_full_struct(gui_config.autosave_filename, replace=True)
         d.destroy_context()
         log('GUI QUIT')

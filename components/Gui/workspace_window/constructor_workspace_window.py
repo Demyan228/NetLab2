@@ -79,6 +79,19 @@ def load_constructor_workspace():
         d.add_file_extension('', color=(200, 200, 255, 255))
         d.add_file_extension('.csv', color=(200, 255, 200, 255))
 
+
+    with d.file_dialog(
+            tag='STRUCT_FILEDIALOG',
+            directory_selector=False,
+            show=False,
+            callback=cb.load_model_struct_callback,
+            width=main_config.DW // 2,
+            height=main_config.DH // 2,
+            default_path=main_config.model_structs_path,
+            ):
+        d.add_file_extension('.*')
+        d.add_file_extension('', color=(200, 255, 200, 255))
+
     with d.group(horizontal=True, parent=Tags.CONSTRUCTOR):
         with d.child_window(tag="WindowNodeEditor", width=int(main_config.DW / 1.5)):
             with d.node_editor(

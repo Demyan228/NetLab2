@@ -5,6 +5,8 @@ from itertools import count
 import config
 import os
 import pickle
+
+from common import log
 from components.Gui.config import NODE_PARAM_WIDTH
 from components.backend.Layers import LayerNames
 from components.backend.Layers import LayerAttributesType, AttributesType
@@ -37,10 +39,11 @@ class LayerConfiguration:
 dict_attributes_dpgtype = {AttributesType.input: create_input_node, AttributesType.output: create_output_node, AttributesType.int: d.add_input_int}
 
 class NodeMaster:
-    nodes_graph = defaultdict(list)
-    links_graph = defaultdict(list)
-    links_elements = {}
-    all_nodes_baseconf = {}
+    nodes_graph = defaultdict(list) # node_id: list(node_ids)
+    links_elements = {}     # link_id: (node_id1, node_id2
+    node_links = defaultdict(list)     # node_id: list(link_ids)
+    all_nodes_baseconf: dict[str: LayerConfiguration] = {}   # tag: LayerConfiguration, для разнообразия тэг вместо id )
+
 
 
     @staticmethod
@@ -73,10 +76,11 @@ class NodeMaster:
     def create_link(left, right, sender="NE"):
         left_node = d.get_item_parent(left)
         right_node = d.get_item_parent(right)
-        NodeMaster.links_graph[left].append(right)
         NodeMaster.nodes_graph[left_node].append(right_node)
         link = d.add_node_link(left, right, parent=sender)
-        NodeMaster.links_elements[link] = (left, right)
+        NodeMaster.links_elements[link] = (left_node, right_node)
+        NodeMaster.node_links[left_node].append(link)
+        NodeMaster.node_links[right_node].append(link)
         left_output = d.get_item_alias(d.get_item_children(left)[1][0])
         right_input = d.get_item_alias(d.get_item_children(right)[1][0])
         d.set_item_source(right_input, left_output)
@@ -84,21 +88,49 @@ class NodeMaster:
             if func in right_input:
                 out_id = right_input.replace("in_features", "out_features")
                 d.set_item_source(out_id, left_output)
+        return link
 
     @staticmethod
     def delete_link(link_id):
-        left, right = NodeMaster.links_elements[link_id]
-        left_node, right_node = d.get_item_parent(left), d.get_item_parent(right)
+        left_node, right_node = NodeMaster.links_elements[link_id]
         NodeMaster.nodes_graph[left_node].remove(right_node)
-        NodeMaster.links_graph[left].remove(right)
+        NodeMaster.node_links[left_node].remove(link_id)
+        NodeMaster.node_links[right_node].remove(link_id)
         d.delete_item(link_id)
         del NodeMaster.links_elements[link_id]
+    @staticmethod
+    def delete_selected():
+        selected_nodes = d.get_selected_nodes("NE")
+        for link in d.get_selected_links("NE"):
+            NodeMaster.delete_link(link)
+        for node in selected_nodes:
+            NodeMaster.delete_node(node)
+
+    @staticmethod
+    def get_start_node():
+        for tag, conf in NodeMaster.all_nodes_baseconf.items():
+            if conf.layer_name == LayerNames.Input:
+                return tag
+        return False
+
+    @staticmethod
+    def delete_node(node_id):
+        need_to_delete_links = NodeMaster.node_links[node_id] * 1
+        for link_id in need_to_delete_links:
+            NodeMaster.delete_link(link_id)
+        if node_id in NodeMaster.nodes_graph: del NodeMaster.nodes_graph[node_id]
+        if node_id in NodeMaster.node_links: del NodeMaster.node_links[node_id]
+        del NodeMaster.all_nodes_baseconf[d.get_item_alias(node_id)]
+        d.delete_item(node_id)
+
 
 
     @staticmethod
     def create_links(links, sender="NE"):
+        link_ids = []
         for params in links:
-            NodeMaster.create_link(*params, sender=sender)
+            link_ids.append(NodeMaster.create_link(*params, sender=sender))
+        return link_ids
 
     @staticmethod
     def get_node_configuration(tag) -> LayerConfiguration:
@@ -114,23 +146,17 @@ class NodeMaster:
             attributes[attr_name] = {"type": type, "default_value": d.get_value(attr)}
         return LayerConfiguration(layer_name, pos, attributes)
 
-
-
     @staticmethod
-    def save_nodes_struct(struct_name, replace=False):
-        #choosen_nodes = [d.get_item_label(i) for i in d.get_selected_nodes("NE")]
-        choosen_nodes = []
-        if not choosen_nodes:
-            choosen_nodes = list(NodeMaster.all_nodes_baseconf.keys())
-        choosen_nodes = set(choosen_nodes)
-        choosen_nodes_id = set([d.get_alias_id(tag) for tag in choosen_nodes])
+    def _save_nodes_struct(struct_name, nodes_tags, replace):
+        nodes_tags = set(nodes_tags)
+        nodes_id = set([d.get_alias_id(tag) for tag in nodes_tags])
         nodes_conf = {}
         links = []
-        for n in choosen_nodes:
+        for n in nodes_tags:
             node_id = d.get_alias_id(n)
             conf = NodeMaster.get_node_configuration(n)
             nodes_conf[node_id] = conf
-            links.extend([[node_id, i] for i in NodeMaster.nodes_graph[node_id] if i in choosen_nodes_id])
+            links.extend([[node_id, i] for i in NodeMaster.nodes_graph[node_id] if i in nodes_id])
         if not replace and struct_name in os.listdir(config.model_structs_path):
             i = 1
             while f"{struct_name}({i})" in os.listdir(config.model_structs_path):
@@ -140,6 +166,18 @@ class NodeMaster:
         with open(f"{struct_path}", "wb") as f:
             file_info = {"nodes_conf": nodes_conf, "links_graph": links}
             pickle.dump(file_info, f)
+
+
+    @staticmethod
+    def save_full_struct(struct_name, replace=False):
+        NodeMaster._save_nodes_struct(struct_name, list(NodeMaster.all_nodes_baseconf.keys()), replace)
+
+    @staticmethod
+    def save_struct(struct_name, replace=False):
+        selected_nodes = [d.get_item_label(i) for i in d.get_selected_nodes("NE")]
+        if not selected_nodes:
+            selected_nodes = list(NodeMaster.all_nodes_baseconf.keys())
+        NodeMaster._save_nodes_struct(struct_name, selected_nodes, replace)
 
     @staticmethod
     def get_output(node_id):
@@ -168,4 +206,5 @@ class NodeMaster:
             NodeMaster.get_output(old_new_ids[links[i][0]])
             links[i][0] = NodeMaster.get_output(old_new_ids[links[i][0]])
             links[i][1] = NodeMaster.get_input(old_new_ids[links[i][1]])
-        NodeMaster.create_links(links)
+        link_ids = NodeMaster.create_links(links)
+
