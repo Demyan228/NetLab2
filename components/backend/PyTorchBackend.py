@@ -3,25 +3,39 @@ from torch import nn
 import os
 from common import log
 from concurrent.futures import ProcessPoolExecutor
+from components.backend.Layers import LayerNames, Layer
 import asyncio
 from functools import partial
+from typing import Dict
+from copy import deepcopy
+
 
 
 def RMSE(target, prediction):
     return torch.sqrt(torch.nn.MSELoss()(target, prediction))
 
 
+base_layers = {LayerNames.Input: None, LayerNames.Linear: nn.Linear, LayerNames.Softmax: nn.Softmax,
+               LayerNames.Sigmoid: nn.Sigmoid,
+               LayerNames.Relu: nn.ReLU}
+
+
 class PyTorchBackend:
+    layers: Dict[str, Layer] = {ln: Layer(base_layers[ln]) for ln in base_layers}
+
+    @staticmethod
+    def add_new_layer(layer_name, layer_fun):
+        PyTorchBackend.layers[layer_name] = layer_fun
+
     @staticmethod
     async def create_model(layers):
         model = nn.Sequential()
-        for layer in layers:
-            layer_name = layer["layer_name"].lower()
-            layer_fun = getattr(PyTorchBackend, layer_name, None)
-            if layer_fun is None:
-                raise ValueError(f"в PyTorchBackend нет слоя {layer_name}")
-            else:
-                model.append(layer_fun(layer["IN"], layer["OUT"]))
+        for l in layers:
+            layer_name = l["layer_name"]
+            layer: Layer = PyTorchBackend.layers[layer_name]
+            layer_params: Dict[str] = deepcopy(l)
+            layer_params.pop("layer_name")
+            model.append(layer.get_layer(layer_params))
 
         model_path = os.path.join('models', 'torch_model')
         if not os.path.exists(model_path):
@@ -38,11 +52,10 @@ class PyTorchBackend:
             await t1
             return t1.result()
 
-
     @staticmethod
     def get_optimizer(optimizer_name: str):
         optimizers = {"Adam": torch.optim.Adam,
-                      "SGD" : torch.optim.SGD
+                      "SGD": torch.optim.SGD
                       }
         return optimizers[optimizer_name]
 
@@ -68,17 +81,9 @@ class PyTorchBackend:
         return loss.item()
 
     @staticmethod
-    def linear(input, output):
-        return nn.Linear(input, output)
+    def get_layer_attributes_type(layer_name: str, expanded=False):
+        return PyTorchBackend.layers[layer_name].get_attributes_type(expanded=expanded)
 
     @staticmethod
-    def relu(input, output):
-        return nn.ReLU()
-
-    @staticmethod
-    def sigmoid(input, output):
-        return nn.Sigmoid()
-
-    @staticmethod
-    def softmax(input, output):
-        return nn.Softmax()
+    def get_all_layer_names():
+        return PyTorchBackend.layers.keys()

@@ -1,4 +1,3 @@
-from collections import defaultdict
 import config
 import os
 
@@ -13,6 +12,5 @@ def get_saved_model_names():
 
 
 current_dataset_path = os.path.join(config.default_dataset_path, config.TEST_DATASET)
-all_nodes_tags = []
-links_graph = defaultdict(list)
-links_elements = {}
+
+

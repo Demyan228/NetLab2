@@ -7,11 +7,14 @@ from pandas.core.dtypes.dtypes import np
 from components.Gui.tags import Tags
 import config
 from common import log
-from components.Gui.nodes import NODES
-from components.Gui.core import links_graph, links_elements
+from components.Gui.nodes import NodeMaster
 from components.Gui import core
+from components.Gui.config import BIAS_X, BIAS_Y
+from config import DW, DH
+from components.backend.PyTorchBackend import PyTorchBackend as Backend
 import pandas as pd
 import pickle
+
 
 def create_csv_table(csv_file):
     df = pd.read_csv(csv_file, encoding="utf8")
@@ -49,36 +52,38 @@ def load_file_callback(sender, app_data):
     create_csv_table(file_path)
 
 def save_model_struct_callback(sender, app_data):
-    choosen_nodes = d.get_selected_nodes("WindowNodeEditor")
-    if not choosen_nodes:
-        choosen_nodes = [d.get_alias_id(i) for i in core.all_nodes_tags]
-    choosen_nodes = set(choosen_nodes)
-    nodes_conf = []
-    links_graph = defaultdict(list)
-    for n in choosen_nodes:
-        conf = d.get_item_configuration(n)
-        nodes_conf.append(conf)
-        links_graph[n] = [i for i in core.links_graph[n] if i in choosen_nodes]
-    struct_name = d.get_value("StructName")
-    if struct_name in os.listdir(config.model_structs_path):
-        i = 1
-        while f"{struct_name}({i}).txt" in os.listdir(config.model_structs_path):
-            i += 1
-        struct_name = f"{struct_name}({i})"
-    with open(f"{struct_name}.txt", "wb") as f:
-        file_info = {"nodes_conf": nodes_conf, "links_graph": links_graph}
-        pickle.dump(file_info, f)
+    struct_name = d.get_value("model_struct_name")
+    NodeMaster.save_struct(struct_name)
+    d.delete_item("save_struct_menu")
 
 
-def load_model_struct(sender, app_data):
-    file_path = app_data["file_path"]
-    with open(file_path, "rb") as f:
-        obj = pickle.load(f)
+def open_save_struct_menu_callback(sender, app_data):
+    if d.does_item_exist("save_struct_menu"):
+        d.show_item("save_struct_menu")
+    else:
+        with d.window(label="Save model", tag="save_struct_menu", pos=(DW // 2, DH // 2), width=300, height=180):
+            d.add_input_text(id="model_struct_name", hint="struct name", width=300)
+            d.add_button(label="Save", callback=save_model_struct_callback, indent=100)
+
+
+def delete_key_pressed_callback(sender, app_data):
+    if d.does_item_exist("NE"):
+        NodeMaster.delete_selected()
+
+
+def open_load_struct_menu_callback(sender, app_data):
+    d.show_item("STRUCT_FILEDIALOG")
+
+def load_model_struct_callback(sender, app_data):
+    file_path = list(app_data['selections'].values())[0]
+    NodeMaster.load_nodes_struct(file_path)
+
         
-
-
-
-
+def user_create_node(sender, app_data, layer_name):
+    pos = d.get_item_pos("NEPOPUP")
+    pos = pos[0] + BIAS_X, pos[1] + BIAS_Y
+    NodeMaster.create_default_node(layer_name, pos)
+    d.hide_item("NEPOPUP")
 
 
 def debug_callback(sender, app_data, user_data):
@@ -104,32 +109,16 @@ def debug_callback(sender, app_data, user_data):
     log(text)
 
 
-def in_out_source_callback(input_attr: str, source):
-    out_id = input_attr.replace("IN", "OUT")
-    d.set_item_source(out_id, source)
-
-
 def delink_callback(_, app_data):
-    left, right = links_elements[app_data]
-    links_graph[left].remove(right)
-    d.delete_item(app_data)
-    del links_elements[app_data]
+    NodeMaster.delete_link(app_data)
 
 
 def link_callback(sender, app_data):
     left, right = app_data
-    links_graph[left].append(right)
-    link = d.add_node_link(left, right, parent=sender)
-    links_elements[link] = (left, right)
-    left_output = d.get_item_alias(d.get_item_children(left)[1][0])
-    right_input = d.get_item_alias(d.get_item_children(right)[1][0])
-    d.set_item_source(right_input, left_output)
-    for func in ['RELU', 'SIGMOID', 'SOFTMAX']:
-        if func in right_input:
-            in_out_source_callback(right_input, left_output)
+    NodeMaster.create_link(left, right, sender=sender)
 
 
-def ne_popup_callback(_):
+def show_node_menu_callback(_):
     pos = d.get_mouse_pos(local=False)
     if d.does_item_exist("NEPOPUP"):
         d.set_item_pos("NEPOPUP", pos=pos)
@@ -143,13 +132,13 @@ def ne_popup_callback(_):
             no_move=True,
             popup=True,
         ):
-            for node_type, callback in NODES.items():
-                if node_type == "sep":
-                    d.add_spacer(height=1)
-                    d.add_separator()
-                    d.add_spacer(height=1)
-                else:
-                    d.add_button(label=node_type, callback=callback, width=200)
+            for node_type in Backend.get_all_layer_names():
+                d.add_button(label=node_type, callback=user_create_node, user_data=node_type, width=200)
+            d.add_spacer()
+            d.add_separator()
+            d.add_spacer()
+            d.add_button(label="save", callback=open_save_struct_menu_callback, width=200)
+            d.add_button(label="load", callback=open_load_struct_menu_callback, width=200)
 
 def visible_map_callback(sender, app_data):
     minimap_visible = d.get_item_configuration("NE")["minimap"]

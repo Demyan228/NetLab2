@@ -1,16 +1,20 @@
 import asyncio
+import os
+from collections import defaultdict
 from time import time
+
 from dearpygui import dearpygui as d
 from common import log
 from event_system import EventSystem as es, EventTypes
 import config as main_config
 import components.Gui.config as gui_config
 from components.Gui.handler_registry import init_handler_registry
-from components.Gui.core import links_graph
+from components.Gui.nodes import NodeMaster
 from components.Gui import core
 from components.Gui.tags import Tags
 from components.Gui.workspace_window.constructor_workspace_window import load_constructor_workspace
 from components.Gui.workspace_window.train_workspace_window import load_train_workspace
+from components.backend.Layers import LayerNames
 from components.Gui.test_configuration import init as test_init
 
 
@@ -27,7 +31,7 @@ def _dpg_post_init():
     d.set_primary_window(Tags.PRIMARY_WINDOW, True)
     d.setup_dearpygui()
     d.show_viewport()
-#     test_init()
+    test_init()
 
 
 class PrimaryWindow:
@@ -66,6 +70,7 @@ class GUI:
         GUI._primary_window = PrimaryWindow()
         _dpg_post_init()
         d.set_item_callback(Tags.START_TRAIN_BUTTON, GUI.assemble_callback)
+        NodeMaster.load_nodes_struct(os.path.join(main_config.model_structs_path, gui_config.autosave_filename))
 
     @staticmethod
     async def _delay():
@@ -83,11 +88,17 @@ class GUI:
 
     @staticmethod
     def get_model_layers():
-        if not d.does_item_exist("start_node"):
+        if not NodeMaster.get_start_node():
             log("warning vse ploxo")
             return []
+        links_graph = defaultdict(list)
+        for inp_node in NodeMaster.nodes_graph:
+            res = []
+            for out_node in NodeMaster.nodes_graph[inp_node]:
+                res.append(NodeMaster.get_input(out_node))
+            links_graph[NodeMaster.get_output(inp_node)] = res
         layers = []
-        cur_attr = d.get_alias_id("start_node")
+        cur_attr = d.get_item_children(d.get_alias_id(NodeMaster.get_start_node()))[1][-1]
         while len(links_graph[d.get_item_children(d.get_item_parent(cur_attr))[1][-1]]) != 0:
             par = d.get_item_parent(cur_attr)
             cur_attr = links_graph[d.get_item_children(par)[1][-1]][0]
@@ -127,5 +138,6 @@ class GUI:
     @es.subscribe(EventTypes.APP_QUIT)
     async def quit_handler(_):
         GUI._is_running = False
+        NodeMaster.save_full_struct(gui_config.autosave_filename, replace=True)
         d.destroy_context()
         log('GUI QUIT')
