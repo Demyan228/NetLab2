@@ -64,11 +64,13 @@ class DataSet:
 class CSVPytorchDataSet(PytorchDataSet):
 
     def __init__(self, df: pd.DataFrame, labels_column: str):
-        self.features = df.drop(columns=[labels_column])
-        self.labels = df[labels_column]
+        self.features = df.drop(columns=[labels_column]).reset_index(drop=True)
+        self.labels = df[labels_column].reset_index(drop=True)
 
     def __getitem__(self, idx):
-        return torch.tensor(self.features.loc[idx, :].tolist()), torch.tensor(self.labels[idx])
+        features = torch.tensor(self.features.loc[idx, :].tolist())
+        labels = torch.tensor(self.labels.loc[idx].tolist())
+        return features, labels
 
     def __len__(self):
         return len(self.labels)
@@ -129,17 +131,16 @@ def _get_csv_dataset(dataset_path: str, labels: str, splits: list[float], batch_
 
     parts = list(map(int, [l*i for i in splits]))
     
-    log(f'{parts = }')
 
     left, right = parts[0], parts[1]
     train_df = df.loc[left:right, :]
     train_part = CSVPytorchDataSet(train_df, labels)
 
-    left, right = parts[1], parts[2]
+    left, right = right, right + parts[2]
     val_df = df.loc[left:right, :]
     val_part = CSVPytorchDataSet(val_df, labels)
 
-    left, right = parts[2], parts[3]
+    left, right = right, right + parts[3]
     test_df = df.loc[left:right, :]
     test_part = CSVPytorchDataSet(test_df, labels)
 

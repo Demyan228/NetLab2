@@ -198,7 +198,8 @@ def load_constructor_workspace():
                 d.add_spacer(height=int(gui_config.INDENT / 2.5))
                 d.add_text('Hyperparams', tag='HyperparamsTextLabel', indent=label_indent)
                 d.add_spacer(height=int(gui_config.INDENT / 2.5))
-                d.add_input_double(tag='HyperparamsLearningRate', label=' LearningRate', width=main_config.DW // 10, indent=gui_config.INDENT, min_value=0.000001, default_value=0.001, step=0)
+                d.add_input_double(tag='HyperparamsLearningRate', label=' LearningRate', width=main_config.DW // 10, 
+                        indent=gui_config.INDENT, min_value=0.000001, default_value=0.001, step=0, format='%.7f')
                 d.add_input_int(tag='HyperparamsBatchSize', label=' BatchSize', width=main_config.DW // 10, indent=gui_config.INDENT, min_value=1,
                                 default_value=64, step=16, step_fast=2)
                 d.add_slider_int(tag='HyperparamsNumEpochs', label=' Num Epochs', width=main_config.DW // 10, indent=gui_config.INDENT, min_value=1,
