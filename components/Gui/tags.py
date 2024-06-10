@@ -24,6 +24,7 @@ class Tags:
     TRAIN_LOSS_SERIES = get_tag()
     TRAIN_PLOT_X_AXIS = get_tag()
     TRAIN_PLOT_Y_AXIS = get_tag()
+    TRAIN_PLOT_PROGRESS = get_tag()
 
 
 class CreateDatasetTags:

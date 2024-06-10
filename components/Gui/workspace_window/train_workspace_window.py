@@ -39,6 +39,7 @@ def load_train_workspace():
 
                         d.add_line_series([], [], tag=Tags.TRAIN_LOSS_SERIES, label='Train Loss', parent=Tags.TRAIN_PLOT_Y_AXIS)
                         d.add_line_series([], [], tag=Tags.TEST_LOSS_SERIES, label='Test Loss', parent=Tags.TRAIN_PLOT_Y_AXIS)
+                    d.add_progress_bar(tag=Tags.TRAIN_PLOT_PROGRESS, width=PLOT_WIDTH)
             with d.tab(label='Other'):
                 pass
 
@@ -47,11 +48,12 @@ def load_train_workspace():
 async def update_series(event_data):
     history = event_data["history"]
     train_X = list(range(1, len(history.train_loss) + 1))
-    t = history.train_loss
-    v = history.test_loss
-    log(f'{t = } | {v = }')
     val_X = list(range(1, len(history.test_loss) + 1))
     d.set_value(Tags.TRAIN_LOSS_SERIES, [train_X, history.train_loss])
     d.set_value(Tags.TEST_LOSS_SERIES, [val_X, history.test_loss])
     d.fit_axis_data(Tags.TRAIN_PLOT_X_AXIS)
     d.fit_axis_data(Tags.TRAIN_PLOT_Y_AXIS)
+    current_progress_idx = event_data['progress_params']['current_iteration_idx']
+    max_iterations = event_data['progress_params']['max_iterations']
+
+    d.set_value(Tags.TRAIN_PLOT_PROGRESS, current_progress_idx / max_iterations)

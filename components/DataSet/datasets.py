@@ -148,6 +148,7 @@ def _get_csv_dataset(dataset_path: str, labels: str, splits: list[float], batch_
 
 
 def get_dataset(dataset_parameters: dict) -> DataSet:
+    #dataset_parameters = {'path': '/home/user/datasets/test.csv', 'target_column': 'charges', 'splits': [0.8, 0.1, 0.1], 'batch_size': 64} 
     dataset_path = dataset_parameters['path']
     splits = dataset_parameters['splits']
     dataset_type = get_dataset_type(dataset_path)

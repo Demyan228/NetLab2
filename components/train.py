@@ -71,7 +71,11 @@ class Trainer:
             train_loss, val_loss = t1.result()
             Trainer._history.train_loss.append(train_loss)
             Trainer._history.test_loss.append(val_loss)
-            await es.ainvoke(EventTypes.EPOCH_DONE, {"history": Trainer._history})
+            progress_params = {
+                    'current_iteration_idx': i,
+                    'max_iterations': Trainer.train_epochs,
+                    }
+            await es.ainvoke(EventTypes.EPOCH_DONE, {"history": Trainer._history, 'progress_params': progress_params})
         log("train done for ", time() - t, "s")
         await es.ainvoke(EventTypes.TRAINER_QUIT)
 
@@ -92,8 +96,6 @@ class Trainer:
 
     @staticmethod
     def train_epoch(model, loss_fn, optimizer, dataset): # ANOTHER PROCESS
-        log(f'{len(dataset.train_loader()) = }')
-        log(f'{len(dataset.val_loader()) = }' )
         loss_train = Trainer._forward(model, loss_fn, optimizer, dataset.train_loader())
         loss_val = Trainer._forward(model, loss_fn, optimizer, dataset.val_loader())
         return loss_train , loss_val
