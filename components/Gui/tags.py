@@ -19,12 +19,18 @@ class Tags:
     START_TRAIN_BUTTON = get_tag()
     SWITCH_PANEL_WINDOW = get_tag()
     TABLE_PRESENTATION_WINDOW = get_tag()
-    TEST_LOSS_SERIES = get_tag()
+    VAL_LOSS_SERIES = get_tag()
+    SPLITS_HYPERPARAMS = get_tag()
+    TEXT_EPOCH_LABEL = get_tag()
+    TEXT_TRAIN_ACC = get_tag()
+    TEXT_TRAIN_LOSS = get_tag()
+    TEXT_VAL_ACC = get_tag()
+    TEXT_VAL_LOSS = get_tag()
     TRAIN = get_tag()
     TRAIN_LOSS_SERIES = get_tag()
+    TRAIN_PLOT_PROGRESS = get_tag()
     TRAIN_PLOT_X_AXIS = get_tag()
     TRAIN_PLOT_Y_AXIS = get_tag()
-    TRAIN_PLOT_PROGRESS = get_tag()
 
 
 class CreateDatasetTags:

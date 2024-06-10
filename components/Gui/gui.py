@@ -122,8 +122,10 @@ class GUI:
         optimizer = d.get_value("HyperparamsOptimizer")
         num_epochs = d.get_value('HyperparamsNumEpochs')
         batch_size = d.get_value('HyperparamsBatchSize')
+        splits = d.get_value(Tags.SPLITS_HYPERPARAMS)[:-1]
+        splits = [i / 100 for i in splits]
         es.invoke(EventTypes.SET_HYPERPARAMS, {"lr": lr, "optimizer": optimizer, "criterian": criterian, 'num_epochs': num_epochs})
-        es.invoke(EventTypes.SET_DATASET_PARAMS, {"path": core.current_dataset_path, "target_column": target_column, "splits": [0.8, 0.1, 0.1], 'batch_size': batch_size})
+        es.invoke(EventTypes.SET_DATASET_PARAMS, {"path": core.current_dataset_path, "target_column": target_column, "splits": splits, 'batch_size': batch_size})
         es.invoke(EventTypes.ASSEMBLE_MODEL, {"layers": layers})
         GUI._primary_window.change_workspace_window(Tags.TRAIN)
 

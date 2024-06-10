@@ -70,14 +70,28 @@ class PyTorchBackend:
         return criterians[criterian_name]
 
     @staticmethod
-    def train_batch(model, batch: list[torch.tensor], loss_fn, optimizer: torch.optim.Optimizer):
+    def get_loss(model, batch: list[torch.tensor], loss_fn):
         X, labels = batch
         X, labels = X.float(), labels.float().unsqueeze(1)
         out = model(X)
         loss = loss_fn(out, labels)
+        return loss
+
+    @staticmethod
+    def train_batch(model: nn.Module, batch: list[torch.tensor], loss_fn, optimizer: torch.optim.Optimizer):
+        model.train()
+        loss = PyTorchBackend.get_loss(model, batch, loss_fn)
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
+        return loss.item()
+
+    @staticmethod
+    def test_batch(model: nn.Module, batch: list[torch.tensor], loss_fn):
+        model.eval()
+        with torch.no_grad():
+            loss = PyTorchBackend.get_loss(model, batch, loss_fn)
+        model.train()
         return loss.item()
 
     @staticmethod

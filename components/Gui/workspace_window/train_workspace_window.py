@@ -31,14 +31,31 @@ def load_train_workspace():
         with d.tab_bar():
             with d.tab(label='Full'):
                 with d.child_window():
-                    with d.plot(width=PLOT_WIDTH, height=PLOT_HEIGHT):
-                        d.add_plot_legend()
+                    with d.group(horizontal=True):
+                        with d.plot(width=PLOT_WIDTH, height=PLOT_HEIGHT):
+                            d.add_plot_legend()
 
-                        d.add_plot_axis(d.mvXAxis, tag=Tags.TRAIN_PLOT_X_AXIS)
-                        d.add_plot_axis(d.mvYAxis, tag=Tags.TRAIN_PLOT_Y_AXIS)
+                            d.add_plot_axis(d.mvXAxis, tag=Tags.TRAIN_PLOT_X_AXIS)
+                            d.add_plot_axis(d.mvYAxis, tag=Tags.TRAIN_PLOT_Y_AXIS)
 
-                        d.add_line_series([], [], tag=Tags.TRAIN_LOSS_SERIES, label='Train Loss', parent=Tags.TRAIN_PLOT_Y_AXIS)
-                        d.add_line_series([], [], tag=Tags.TEST_LOSS_SERIES, label='Test Loss', parent=Tags.TRAIN_PLOT_Y_AXIS)
+                            d.add_line_series([], [], tag=Tags.TRAIN_LOSS_SERIES, 
+                                              label='Train Loss', parent=Tags.TRAIN_PLOT_Y_AXIS)
+                            d.add_line_series([], [], tag=Tags.VAL_LOSS_SERIES, 
+                                              label='Val Loss', parent=Tags.TRAIN_PLOT_Y_AXIS)
+                        d.add_text('    ')
+                        with d.group(width=200):
+                            d.add_text(tag=Tags.TEXT_EPOCH_LABEL)
+                            d.add_spacer(height=5)
+                            d.add_separator()
+                            d.add_spacer(height=5)
+                            d.add_text(tag=Tags.TEXT_TRAIN_LOSS)
+                            d.add_text(tag=Tags.TEXT_VAL_LOSS)
+                            d.add_spacer(height=5)
+                            d.add_separator()
+                            d.add_spacer(height=5)
+                            d.add_text(tag=Tags.TEXT_TRAIN_ACC)
+                            d.add_text(tag=Tags.TEXT_VAL_ACC)
+
                     d.add_progress_bar(tag=Tags.TRAIN_PLOT_PROGRESS, width=PLOT_WIDTH)
             with d.tab(label='Other'):
                 pass
@@ -48,12 +65,16 @@ def load_train_workspace():
 async def update_series(event_data):
     history = event_data["history"]
     train_X = list(range(1, len(history.train_loss) + 1))
-    val_X = list(range(1, len(history.test_loss) + 1))
+    val_X = list(range(1, len(history.val_loss) + 1))
     d.set_value(Tags.TRAIN_LOSS_SERIES, [train_X, history.train_loss])
-    d.set_value(Tags.TEST_LOSS_SERIES, [val_X, history.test_loss])
+    d.set_value(Tags.VAL_LOSS_SERIES, [val_X, history.val_loss])
     d.fit_axis_data(Tags.TRAIN_PLOT_X_AXIS)
     d.fit_axis_data(Tags.TRAIN_PLOT_Y_AXIS)
-    current_progress_idx = event_data['progress_params']['current_iteration_idx']
+    current_progress_idx = event_data['progress_params']['current_iteration_idx'] + 1
     max_iterations = event_data['progress_params']['max_iterations']
-
     d.set_value(Tags.TRAIN_PLOT_PROGRESS, current_progress_idx / max_iterations)
+    d.set_value(Tags.TEXT_EPOCH_LABEL, f'Epoch: {current_progress_idx} / {max_iterations}')
+    d.set_value(Tags.TEXT_TRAIN_LOSS, f'Train loss: {history.train_loss[-1]:.4f}')
+    d.set_value(Tags.TEXT_VAL_LOSS, f'  Val loss: {history.val_loss[-1]:.4f}')
+    d.set_value(Tags.TEXT_TRAIN_ACC, f' Train acc: ...')
+    d.set_value(Tags.TEXT_VAL_ACC, f'   Val acc: ...')

@@ -126,11 +126,10 @@ def _get_img_dataset(dataset_path: str, splits: list[float], batch_size) -> Data
 
 def _get_csv_dataset(dataset_path: str, labels: str, splits: list[float], batch_size) -> DataSet:
     df = pd.read_csv(dataset_path)
+    df = df.sample(frac=1).reset_index(drop=True)
     l = len(df)
     splits = [0] + splits
-
     parts = list(map(int, [l*i for i in splits]))
-    
 
     left, right = parts[0], parts[1]
     train_df = df.loc[left:right, :]

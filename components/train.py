@@ -18,9 +18,9 @@ ppe = ProcessPoolExecutor()
 @dataclass
 class History:
     train_loss: list[float] = field(default_factory=list)
-    test_loss: list[float] = field(default_factory=list)
+    val_loss: list[float] = field(default_factory=list)
     train_acc: float = 0
-    test_acc: float = 0
+    val_acc: float = 0
 
 
 class Trainer:
@@ -70,7 +70,7 @@ class Trainer:
             await t1
             train_loss, val_loss = t1.result()
             Trainer._history.train_loss.append(train_loss)
-            Trainer._history.test_loss.append(val_loss)
+            Trainer._history.val_loss.append(val_loss)
             progress_params = {
                     'current_iteration_idx': i,
                     'max_iterations': Trainer.train_epochs,
@@ -80,7 +80,7 @@ class Trainer:
         await es.ainvoke(EventTypes.TRAINER_QUIT)
 
     @staticmethod
-    def _forward(model, loss_fn, optimizer, data_loader):
+    def _train_forward(model, loss_fn, optimizer, data_loader):
         sum_loss = 0
         count = 0
         sum_data_means = 0
@@ -95,9 +95,24 @@ class Trainer:
         return sum_loss / count if count > 0 else 0
 
     @staticmethod
+    def _test_forward(model, loss_fn, data_loader):
+        sum_loss = 0
+        count = 0
+        sum_data_means = 0
+        for batch in data_loader:
+            if not Trainer._is_running:
+                break
+            batch_loss = PyTorchBackend.test_batch(model, batch, loss_fn)
+            _, y = batch
+            sum_data_means += sum(y) / len(y)
+            sum_loss += batch_loss
+            count += 1
+        return sum_loss / count if count > 0 else 0
+
+    @staticmethod
     def train_epoch(model, loss_fn, optimizer, dataset): # ANOTHER PROCESS
-        loss_train = Trainer._forward(model, loss_fn, optimizer, dataset.train_loader())
-        loss_val = Trainer._forward(model, loss_fn, optimizer, dataset.val_loader())
+        loss_train = Trainer._train_forward(model, loss_fn, optimizer, dataset.train_loader())
+        loss_val = Trainer._test_forward(model, loss_fn, dataset.val_loader())
         return loss_train , loss_val
 
     @staticmethod

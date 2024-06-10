@@ -247,7 +247,8 @@ def load_constructor_workspace():
                 d.add_text('[Train / Val / Test]', indent=label_indent // 2)
                 d.add_spacer(height=int(gui_config.INDENT / 2.5))
                 with d.group(horizontal=True):
-                    d.add_drag_floatx(size=3, default_value=(70, 15, 15), indent=gui_config.INDENT)
+                    d.add_drag_floatx(tag=Tags.SPLITS_HYPERPARAMS, size=3, 
+                                      default_value=(70, 15, 15), indent=gui_config.INDENT)
                 d.add_spacer(height=int(gui_config.INDENT / 2.5))
                 with d.group(horizontal=True):
                     d.add_checkbox(label=' KFolds', indent=gui_config.INDENT)
