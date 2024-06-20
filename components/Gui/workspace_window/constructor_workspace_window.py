@@ -22,13 +22,15 @@ class DatasetCreator:
 
     @staticmethod
     def _create_dataset_classification():
-        n_samples = d.get_value(CTags.N_SAMPLES)
-        n_features = d.get_value(CTags.N_FEATURES)
-        n_classes = d.get_value(CTags.N_CLASSES)
+        n_samples = d.get_value(CTags.N_CLS_SAMPLES)
+        n_features = d.get_value(CTags.N_CLS_FEATURES)
+        n_classes = d.get_value(CTags.N_CLS_CLASSES)
+        random_seed = d.get_value(CTags.CLS_RANDOM_SEED)
         data_x, data_y = sklearn.datasets.make_classification(
                 n_samples=n_samples,
                 n_features=n_features,
                 n_classes=n_classes,
+                random_state=random_seed
                 )
         dataset = pd.DataFrame(data_x, columns=[f' FEATURE-{i} ' for i in range(1, n_features + 1)])
         dataset['TARGET'] = pd.Series(data_y)
@@ -40,19 +42,21 @@ class DatasetCreator:
 
     @staticmethod
     def _create_dataset_regression():
-        n_samples = d.get_value(CTags.N_SAMPLES)
-        n_features = d.get_value(CTags.N_FEATURES)
-        data = sklearn.datasets.make_regression(
+        n_samples = d.get_value(CTags.N_REG_SAMPLES)
+        n_features = d.get_value(CTags.N_REG_FEATURES)
+        random_seed = d.get_value(CTags.REG_RANDOM_SEED)
+        data_x, data_y = sklearn.datasets.make_regression(
                 n_samples=n_samples,
                 n_features=n_features,
+                random_state=random_seed
                 )
-#         log(f'[LOG] : {data = }')
-#         dataset = pd.DataFrame(data_x, columns=[f' FEATURE-{i} ' for i in range(1, n_features + 1)])
-#         dataset['TARGET'] = pd.Series(data_y)
-#         if not os.path.exists(main_config.TMP_FOLDER_PATH):
-#             os.makedirs(main_config.TMP_FOLDER_PATH)
-#         dataset.to_csv(main_config.CUSTOM_DATASET_PATH, index=False)
-#         cb.create_csv_table(main_config.CUSTOM_DATASET_PATH)
+        dataset = pd.DataFrame(data_x, columns=[f' FEATURE-{i} ' for i in range(1, n_features + 1)])
+        dataset['TARGET'] = pd.Series(data_y)
+        if not os.path.exists(main_config.TMP_FOLDER_PATH):
+            os.makedirs(main_config.TMP_FOLDER_PATH)
+        dataset.to_csv(main_config.CUSTOM_DATASET_PATH, index=False)
+        cb.create_csv_table(main_config.CUSTOM_DATASET_PATH)
+        change_dataset_path(main_config.CUSTOM_DATASET_PATH)
 
     @staticmethod
     def create_dataset_callback(sender, app_data, user_data):
@@ -79,62 +83,78 @@ def create_dataset_window_callback(sender, app_data):
                 d.add_spacer(height=int(gui_config.INDENT / 2.5))
                 with d.group():
                     with d.group(horizontal=True):
-                        d.add_button(
-                                label='[EASY]', 
-                                callback=cb.choice_dataset_callback, 
-                                width=gui_config.HYPERPARAMS_BUTTON_WIDTH, 
-                                indent=gui_config.INDENT // 2
-                                 )
-                        d.add_button(
-                                label='[MEDIUM]', 
-                                callback=create_dataset_window_callback, 
-                                width=gui_config.HYPERPARAMS_BUTTON_WIDTH, 
-                                 )
-                        d.add_button(
-                                label='[HARD]', 
-                                callback=create_dataset_window_callback, 
-                                width=gui_config.HYPERPARAMS_BUTTON_WIDTH, 
-                                 )
-                    d.add_spacer(height=int(gui_config.INDENT / 2.5))
-                    with d.group(horizontal=True):
                         def set_samples_value_cb(sender, _, value):
-                            d.set_value(CTags.N_SAMPLES, value)
+                            d.set_value(CTags.N_CLS_SAMPLES, value)
                         d.add_text(' Samples: ')
                         d.add_text(padding)
-                        d.add_slider_int(tag=CTags.N_SAMPLES, default_value=100, width=100, max_value=10000)
+                        d.add_slider_int(tag=CTags.N_CLS_SAMPLES, default_value=100, width=100, max_value=10000)
                         d.add_text(padding)
                         d.add_button(label='10', width=100, callback=set_samples_value_cb, user_data=10)
                         d.add_button(label='100', width=100, callback=set_samples_value_cb, user_data=100)
                         d.add_button(label='1000', width=100, callback=set_samples_value_cb, user_data=1000)
                     with d.group(horizontal=True):
                         def set_features_value_cb(sender, _, value):
-                            d.set_value(CTags.N_FEATURES, value)
+                            d.set_value(CTags.N_CLS_FEATURES, value)
                         d.add_text(' Features:')
                         d.add_text(padding)
-                        d.add_slider_int(tag=CTags.N_FEATURES, default_value=4, width=100)
+                        d.add_slider_int(tag=CTags.N_CLS_FEATURES, default_value=4, width=100)
                         d.add_text(padding)
                         d.add_button(label='2', width=100, callback=set_features_value_cb, user_data=2)
                         d.add_button(label='4', width=100, callback=set_features_value_cb, user_data=4)
                         d.add_button(label='8', width=100, callback=set_features_value_cb, user_data=8)
                     with d.group(horizontal=True):
                         def set_classes_value_cb(sender, _, value):
-                            d.set_value(CTags.N_CLASSES, value)
+                            d.set_value(CTags.N_CLS_CLASSES, value)
                         d.add_text(' Classes: ')
                         d.add_text(padding)
-                        d.add_slider_int(tag=CTags.N_CLASSES, default_value=2, width=100)
+                        d.add_slider_int(tag=CTags.N_CLS_CLASSES, default_value=2, width=100)
                         d.add_text(padding)
                         d.add_button(label='2', width=100, callback=set_classes_value_cb, user_data=2)
                         d.add_button(label='4', width=100, callback=set_classes_value_cb, user_data=4)
                         d.add_button(label='8', width=100, callback=set_classes_value_cb, user_data=8)
                     d.add_spacer(height=int(gui_config.INDENT / 2.5))
                     with d.group(horizontal=True):
-                        d.add_text(' Random State:')
+                        d.add_text(' Random Seed:')
                         d.add_text(padding)
-                        d.add_input_int(default_value=random.randint(1, 1_000_000_000), step=0, width=300)
-                        d.add_text(' ')
-                        d.add_checkbox(default_value=True)
+                        d.add_input_int(
+                                tag=CTags.CLS_RANDOM_SEED, 
+                                default_value=random.randint(1, 1_000_000_000), 
+                                step=0, width=395
+                                )
+                        d.add_text(padding)
             with d.tab(label='Regression', tag=CTags.REGRESSION):
-                pass
+                d.add_spacer(height=int(gui_config.INDENT / 2.5))
+                with d.group():
+                    with d.group(horizontal=True):
+                        def set_samples_value_cb(sender, _, value):
+                            d.set_value(CTags.N_REG_SAMPLES, value)
+                        d.add_text(' Samples: ')
+                        d.add_text(padding)
+                        d.add_slider_int(tag=CTags.N_REG_SAMPLES, default_value=100, width=100, max_value=10000)
+                        d.add_text(padding)
+                        d.add_button(label='10', width=100, callback=set_samples_value_cb, user_data=10)
+                        d.add_button(label='100', width=100, callback=set_samples_value_cb, user_data=100)
+                        d.add_button(label='1000', width=100, callback=set_samples_value_cb, user_data=1000)
+                    with d.group(horizontal=True):
+                        def set_features_value_cb(sender, _, value):
+                            d.set_value(CTags.N_REG_FEATURES, value)
+                        d.add_text(' Features:')
+                        d.add_text(padding)
+                        d.add_slider_int(tag=CTags.N_REG_FEATURES, default_value=4, width=100)
+                        d.add_text(padding)
+                        d.add_button(label='2', width=100, callback=set_features_value_cb, user_data=2)
+                        d.add_button(label='4', width=100, callback=set_features_value_cb, user_data=4)
+                        d.add_button(label='8', width=100, callback=set_features_value_cb, user_data=8)
+                    d.add_spacer(height=int(gui_config.INDENT * 1.175))
+                    with d.group(horizontal=True):
+                        d.add_text(' Random Seed:')
+                        d.add_text(padding)
+                        d.add_input_int(
+                                tag=CTags.REG_RANDOM_SEED, 
+                                default_value=random.randint(1, 1_000_000_000), 
+                                step=0, width=395
+                                )
+                        d.add_text(padding)
 
         d.add_spacer(height=int(gui_config.INDENT / 2.5))
         with d.group(horizontal=True):
@@ -180,7 +200,7 @@ def load_constructor_workspace():
         d.add_file_extension('.*')
         d.add_file_extension('', color=(200, 255, 200, 255))
 
-    with d.group(horizontal=True, parent=Tags.CONSTRUCTOR):
+    with d.group(horizontal=True, parent=Tags.WW_CONSTRUCTOR):
         with d.child_window(tag="WindowNodeEditor", width=int(main_config.DW / 1.5)):
             with d.node_editor(
                     tag="NE", 
