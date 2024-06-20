@@ -4,6 +4,7 @@ from collections import defaultdict
 from time import time
 
 from dearpygui import dearpygui as d
+
 from common import log
 from event_system import EventSystem as es, EventTypes
 import config as main_config
@@ -12,10 +13,12 @@ from components.Gui.handler_registry import init_handler_registry
 from components.Gui.nodes import NodeMaster
 from components.Gui import core
 from components.Gui.tags import Tags
+from components.Gui.test_configuration import init as test_init
+
+from components.Gui.workspace_window.data_analysis_workspace_window import load_data_analysis_workspace
+from components.Gui.workspace_window.ensemble_workspace_window import load_ensemble_workspace
 from components.Gui.workspace_window.constructor_workspace_window import load_constructor_workspace
 from components.Gui.workspace_window.train_workspace_window import load_train_workspace
-from components.backend.Layers import LayerNames
-from components.Gui.test_configuration import init as test_init
 
 
 def _dpg_pre_init():
@@ -37,18 +40,44 @@ def _dpg_post_init():
 class PrimaryWindow:
 
     def __init__(self):
-        self._current_ws_tag = Tags.CONSTRUCTOR
+        self._current_ws_tag = Tags.WW_CONSTRUCTOR
         with d.window(tag=Tags.PRIMARY_WINDOW):
             with d.child_window(tag=Tags.SWITCH_PANEL_WINDOW, height=60):
                 with d.group(horizontal=True):
-                    d.add_text('', indent=(main_config.DW // 2 - (2 * gui_config.SWITCH_PANEL_BUTTON_WIDTH) // 2)) # FIX: 2 -> workspaces count
-                    d.add_button(label='CONSTRUCTOR', width=gui_config.SWITCH_PANEL_BUTTON_WIDTH, callback=lambda: self.change_workspace_window(Tags.CONSTRUCTOR))
-                    d.add_button(label='TRAIN', width=gui_config.SWITCH_PANEL_BUTTON_WIDTH, callback=lambda: self.change_workspace_window(Tags.TRAIN))
-            with d.child_window(tag=Tags.CONSTRUCTOR):
+                    workspaces_count = 4 # FIX: need procedure
+                    d.add_text('', indent=(main_config.DW // 2 - (workspaces_count * gui_config.SWITCH_PANEL_BUTTON_WIDTH) // 2))
+                    d.add_button(
+                            label='CONSTRUCTOR', 
+                            width=gui_config.SWITCH_PANEL_BUTTON_WIDTH, 
+                            callback=lambda: self.change_workspace_window(Tags.WW_CONSTRUCTOR)
+                            )
+                    d.add_button(
+                            label='ENSEMBLE', 
+                            width=gui_config.SWITCH_PANEL_BUTTON_WIDTH, 
+                            callback=lambda: self.change_workspace_window(Tags.WW_ENSEMBLE)
+                            )
+                    d.add_button(
+                            label='DATA ANALYSIS', 
+                            width=gui_config.SWITCH_PANEL_BUTTON_WIDTH, 
+                            callback=lambda: self.change_workspace_window(Tags.WW_DATA_ANALYSIS)
+                            )
+                    d.add_button(
+                            label='TRAIN', 
+                            width=gui_config.SWITCH_PANEL_BUTTON_WIDTH, 
+                            callback=lambda: self.change_workspace_window(Tags.WW_TRAIN)
+                            )
+            with d.child_window(tag=Tags.WW_CONSTRUCTOR):
                 load_constructor_workspace()
-            with d.child_window(tag=Tags.TRAIN):
+
+            with d.child_window(tag=Tags.WW_ENSEMBLE):
+                load_ensemble_workspace()
+            d.hide_item(Tags.WW_ENSEMBLE)
+            with d.child_window(tag=Tags.WW_DATA_ANALYSIS):
+                load_data_analysis_workspace()
+            d.hide_item(Tags.WW_DATA_ANALYSIS)
+            with d.child_window(tag=Tags.WW_TRAIN):
                 load_train_workspace()
-            d.hide_item(Tags.TRAIN)
+            d.hide_item(Tags.WW_TRAIN)
 
     def change_workspace_window(self, ws_tag: str):
         d.hide_item(self._current_ws_tag)
@@ -125,9 +154,9 @@ class GUI:
         splits = d.get_value(Tags.SPLITS_HYPERPARAMS)[:-1]
         splits = [i / 100 for i in splits]
         es.invoke(EventTypes.SET_HYPERPARAMS, {"lr": lr, "optimizer": optimizer, "criterian": criterian, 'num_epochs': num_epochs})
-        es.invoke(EventTypes.SET_DATASET_PARAMS, {"path": core.current_dataset_path, "target_column": target_column, "splits": splits, 'batch_size': batch_size})
+        es.invoke(EventTypes.SET_DATASET_PARAMS, {"path": core.current_dataset_path, "target_column": target_column, "splits": [0.75, 0.25, 0.0], 'batch_size': batch_size})
         es.invoke(EventTypes.ASSEMBLE_MODEL, {"layers": layers})
-        GUI._primary_window.change_workspace_window(Tags.TRAIN)
+        GUI._primary_window.change_workspace_window(Tags.WW_TRAIN)
 
     @staticmethod
     @es.subscribe(EventTypes.START_APP)

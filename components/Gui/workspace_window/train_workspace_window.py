@@ -18,7 +18,7 @@ ts_X = list(map(float, range(1, 100)))
 ts_Y = [math.sqrt(i) / 2 for i in ts_X]
 
 def load_train_workspace():
-    with d.child_window(parent=Tags.TRAIN):
+    with d.child_window(parent=Tags.WW_TRAIN):
         with d.group():
             d.add_spacer(height=gui_config.INDENT // 2)
             with d.group(horizontal=True):
