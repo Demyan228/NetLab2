@@ -34,7 +34,7 @@ def _dpg_post_init():
     d.set_primary_window(Tags.PRIMARY_WINDOW, True)
     d.setup_dearpygui()
     d.show_viewport()
-    test_init()
+#     test_init()
 
 
 class PrimaryWindow:
@@ -154,7 +154,7 @@ class GUI:
         splits = d.get_value(Tags.SPLITS_HYPERPARAMS)[:-1]
         splits = [i / 100 for i in splits]
         es.invoke(EventTypes.SET_HYPERPARAMS, {"lr": lr, "optimizer": optimizer, "criterian": criterian, 'num_epochs': num_epochs})
-        es.invoke(EventTypes.SET_DATASET_PARAMS, {"path": core.current_dataset_path, "target_column": target_column, "splits": [0.75, 0.25, 0.0], 'batch_size': batch_size})
+        es.invoke(EventTypes.SET_DATASET_PARAMS, {"path": core.current_dataset_path, "target_column": target_column, "splits": splits, 'batch_size': batch_size})
         es.invoke(EventTypes.ASSEMBLE_MODEL, {"layers": layers})
         GUI._primary_window.change_workspace_window(Tags.WW_TRAIN)
 
