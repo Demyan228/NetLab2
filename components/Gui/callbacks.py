@@ -5,6 +5,7 @@ from dearpygui import dearpygui as d
 from pandas.core.dtypes.dtypes import np
 
 from components.Gui.tags import Tags
+from common import log
 import config
 from common import log
 from components.Gui.nodes import NodeMaster
@@ -43,13 +44,15 @@ def create_csv_table(csv_file):
                     d.add_text(str(value))
 
 
-def choice_dataset_callback(sender, app_data):
+def choice_dataset_callback(sender, app_data, user_data):
     d.show_item('FILEDIALOG')
+    d.configure_item('FILEDIALOG', directory_selector=user_data)
 
 def load_file_callback(sender, app_data):
+    log(list(app_data['selections'].values()))
     file_path = list(app_data['selections'].values())[0]
     core.change_dataset_path(file_path)
-    create_csv_table(file_path)
+#     create_csv_table(file_path) # TODO: show_dataset_info
 
 def save_model_struct_callback(sender, app_data):
     struct_name = d.get_value("model_struct_name")

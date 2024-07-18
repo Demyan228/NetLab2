@@ -176,7 +176,7 @@ def create_dataset_window_callback(sender, app_data):
 def load_constructor_workspace():
     with d.file_dialog(
             tag='FILEDIALOG', 
-            directory_selector=False, 
+            directory_selector=True, 
             show=False,
             callback=cb.load_file_callback, 
             width=main_config.DW // 2, 
@@ -230,35 +230,51 @@ def load_constructor_workspace():
                             items=['MSE', "MAE", 'RMSE', 'BCE', 'CCE'], default_value='MAE')
                 d.add_spacer(height=int(gui_config.INDENT / 2.5))
                 d.add_separator()
-                d.add_spacer(height=int(gui_config.INDENT / 2.5))
+                d.add_spacer(height=int(gui_config.INDENT / 4))
                 d.add_text('DataSet', tag='DatasetLabel', indent=label_indent)
-                d.add_spacer(height=int(gui_config.INDENT / 2.5))
+                d.add_spacer(height=int(gui_config.INDENT / 4))
                 with d.group():
                     with d.group(horizontal=True):
+                        d.add_text('    Load  ')
                         d.add_button(
-                                label='Load', 
+                                label='File', 
                                 callback=cb.choice_dataset_callback, 
+                                user_data=False,
                                 width=gui_config.HYPERPARAMS_BUTTON_WIDTH, 
-                                indent=gui_config.INDENT
-                                 )
+                                )
+                        d.add_text(' ')
+                        d.add_button(
+                                label='Directory', 
+                                callback=cb.choice_dataset_callback, 
+                                user_data=True,
+                                width=gui_config.HYPERPARAMS_BUTTON_WIDTH, 
+                                )
+                    d.add_spacer(height=5)
+                    with d.group(horizontal=True):
+#                         d.add_button(
+#                                 label='Load', 
+#                                 callback=cb.choice_dataset_callback, 
+#                                 width=gui_config.HYPERPARAMS_BUTTON_WIDTH, 
+#                                 indent=gui_config.INDENT
+#                                  )
                         d.add_button(
                                 label='Create', 
                                 callback=create_dataset_window_callback, 
                                 width=gui_config.HYPERPARAMS_BUTTON_WIDTH, 
-                                indent=gui_config.INDENT + gui_config.HYPERPARAMS_BUTTON_WIDTH + gui_config.PADDING_BUTTONS_HYPERPARAMS,
+                                indent=gui_config.INDENT,
                                  )
                         d.add_combo(
                                 tag=Tags.DATASET_TARGET_COLUMN,
                                 width=main_config.DW // 15, 
                                 items=["Choose dataset"], 
                                 default_value='[Target]',
-                                indent=(gui_config.INDENT + gui_config.PADDING_BUTTONS_HYPERPARAMS + gui_config.HYPERPARAMS_BUTTON_WIDTH)*2,
+                                indent=(gui_config.INDENT + gui_config.PADDING_BUTTONS_HYPERPARAMS + gui_config.HYPERPARAMS_BUTTON_WIDTH)*1,
                                 )
                         d.add_button(
                                 tag=Tags.START_TRAIN_BUTTON, 
                                 label='Train', 
                                 width=main_config.DW // 20, 
-                                indent=(gui_config.INDENT + gui_config.PADDING_BUTTONS_HYPERPARAMS + gui_config.HYPERPARAMS_BUTTON_WIDTH)*3,
+                                indent=(gui_config.INDENT + gui_config.PADDING_BUTTONS_HYPERPARAMS + gui_config.HYPERPARAMS_BUTTON_WIDTH)*2,
                                 )
 
                 d.add_spacer(height=int(gui_config.INDENT / 2.5))
