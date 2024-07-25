@@ -44,7 +44,7 @@ class PrimaryWindow:
         with d.window(tag=Tags.PRIMARY_WINDOW):
             with d.child_window(tag=Tags.SWITCH_PANEL_WINDOW, height=60):
                 with d.group(horizontal=True):
-                    workspaces_count = 4 # FIX: need procedure
+                    workspaces_count = 4 # TODO: need procedure
                     d.add_text('', indent=(main_config.DW // 2 - (workspaces_count * gui_config.SWITCH_PANEL_BUTTON_WIDTH) // 2))
                     d.add_button(
                             label='CONSTRUCTOR', 
