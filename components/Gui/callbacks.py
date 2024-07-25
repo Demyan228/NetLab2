@@ -49,10 +49,10 @@ def choice_dataset_callback(sender, app_data, user_data):
     d.configure_item('FILEDIALOG', directory_selector=user_data)
 
 def load_file_callback(sender, app_data):
-    log(list(app_data['selections'].values()))
     file_path = list(app_data['selections'].values())[0]
-    core.change_dataset_path(file_path)
-#     create_csv_table(file_path) # TODO: show_dataset_info
+    core.change_dataset_path(os.path.dirname(file_path))
+    log(core.current_dataset_path)
+    # create_csv_table(file_path) # TODO: show_dataset_info
 
 def save_model_struct_callback(sender, app_data):
     struct_name = d.get_value("model_struct_name")

@@ -22,7 +22,7 @@ class DatasetType(Enum):
 def _is_img_dataset(path: str) -> bool:
     if not os.path.isdir(path):
         return False
-    return all(os.path.isdir(name) for name in os.listdir(path))
+    return all(os.path.isdir(os.path.join(path, name)) for name in os.listdir(path))
 
 
 def get_dataset_type(path: str) -> DatasetType:
@@ -85,14 +85,14 @@ class ImgPytorchDataSet(PytorchDataSet):
 
     def __init__(self, samples: list[ImgSample]):
         self.samples = samples
-        self.transforms = torchvision_transforms.Compose(torchvision_transforms.ToTensor())
+        self.transforms = torchvision_transforms.Compose([torchvision_transforms.ToTensor(), torchvision_transforms.Resize([64, 64])])
 
     def __getitem__(self, idx):
         sample = self.samples[idx]
         image = pil_loader(sample.path)
-        target = sample.target
+        label = sample.label
         image = self.transforms(image)
-        return image, target
+        return image, label
 
     def __len__(self):
         return len(self.samples)
