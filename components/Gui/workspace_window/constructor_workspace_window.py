@@ -215,7 +215,7 @@ def load_constructor_workspace():
             with d.child_window(tag='WindowHyperparams', height=int(main_config.DH / 2.5)):
                 window_width = int(main_config.DW - main_config.DW / 1.5)
                 label_indent = window_width // 3
-                d.add_spacer(height=int(gui_config.INDENT / 2.5))
+                d.add_spacer(height=int(gui_config.INDENT / 4))
                 d.add_text('Hyperparams', tag='HyperparamsTextLabel', indent=label_indent)
                 d.add_spacer(height=int(gui_config.INDENT / 2.5))
                 d.add_input_double(tag='HyperparamsLearningRate', label=' LearningRate', width=main_config.DW // 10, 
@@ -251,12 +251,6 @@ def load_constructor_workspace():
                                 )
                     d.add_spacer(height=5)
                     with d.group(horizontal=True):
-#                         d.add_button(
-#                                 label='Load', 
-#                                 callback=cb.choice_dataset_callback, 
-#                                 width=gui_config.HYPERPARAMS_BUTTON_WIDTH, 
-#                                 indent=gui_config.INDENT
-#                                  )
                         d.add_button(
                                 label='Create', 
                                 callback=create_dataset_window_callback, 
